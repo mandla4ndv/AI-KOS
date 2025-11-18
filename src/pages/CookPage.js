@@ -1,68 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { useToast } from '../contexts/ToastContext';
-import CookingMode from '../components/CookingMode';
-import RatingDialog from '../components/RatingDialog';
-import { saveRecipe } from '../services/storageService';
-import '../styles/CookPage.css';
+import React from 'react';
+import { ArrowLeft } from 'lucide-react';
 
 const CookPage = () => {
-  const [recipe, setRecipe] = useState(null);
-  const [showRatingDialog, setShowRatingDialog] = useState(false);
-  const { addToast } = useToast();
-
-  useEffect(() => {
-    const storedRecipe = sessionStorage.getItem('currentRecipe');
-    if (storedRecipe) {
-      setRecipe(JSON.parse(storedRecipe));
-    } else {
-      // Try to get recipe from URL hash
-      const hash = window.location.hash;
-      if (hash.startsWith('#recipe-')) {
-        const recipeId = hash.replace('#recipe-', '');
-        const savedRecipes = JSON.parse(localStorage.getItem('recipeai_saved_recipes') || '[]');
-        const foundRecipe = savedRecipes.find(r => r.id === recipeId);
-        if (foundRecipe) {
-          setRecipe(foundRecipe);
-          sessionStorage.setItem('currentRecipe', JSON.stringify(foundRecipe));
-        } else {
-          window.location.hash = 'home';
-          addToast({
-            title: 'Recipe not found',
-            description: 'Please generate a recipe first',
-            variant: 'destructive',
-          });
-        }
-      } else {
-        window.location.hash = 'home';
-        addToast({
-          title: 'No recipe selected',
-          description: 'Please generate a recipe first',
-          variant: 'destructive',
-        });
-      }
-    }
-  }, [addToast]);
-
-  const handleComplete = () => {
-    setShowRatingDialog(true);
-  };
-
-  const handleRate = (rating, comment = '') => {
-    if (recipe) {
-      saveRecipe(recipe, rating);
-      addToast({
-        title: 'Recipe saved!',
-        description: comment ? 'Your recipe and rating have been saved' : 'Your recipe has been added to My Recipes',
-      });
-      window.location.hash = 'my-recipes';
-    }
-  };
-
-  const handleExit = () => {
-    if (confirm('Are you sure you want to exit cooking mode?')) {
-      window.location.hash = 'home';
-    }
-  };
+  const recipe = JSON.parse(sessionStorage.getItem('currentRecipe') || 'null');
 
   if (!recipe) {
     return React.createElement(
@@ -73,19 +13,21 @@ const CookPage = () => {
         { className: 'text-center' },
         [
           React.createElement(
-            'div',
-            {
-              key: 'spinner',
-              className: 'h-16 w-16 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto mb-4'
-            }
+            'h1',
+            { key: 'title', className: 'text-2xl font-bold mb-4' },
+            'No Recipe Selected'
           ),
           React.createElement(
-            'p',
+            'button',
             {
-              key: 'text',
-              style: { color: 'var(--muted-foreground)' }
+              key: 'back',
+              onClick: () => window.location.hash = 'home',
+              className: 'btn btn-primary gap-2'
             },
-            'Loading recipe...'
+            [
+              React.createElement(ArrowLeft, { key: 'icon', size: 16 }),
+              'Back to Home'
+            ]
           )
         ]
       )
@@ -93,24 +35,75 @@ const CookPage = () => {
   }
 
   return React.createElement(
-    React.Fragment,
-    null,
-    [
-      React.createElement(CookingMode, {
-        key: 'cooking-mode',
-        recipe: recipe,
-        onComplete: handleComplete,
-        onExit: handleExit
-      }),
-      React.createElement(RatingDialog, {
-        key: 'rating-dialog',
-        open: showRatingDialog,
-        onOpenChange: setShowRatingDialog,
-        recipeTitle: recipe.title,
-        currentRating: 0,
-        onRate: handleRate
-      })
-    ]
+    'div',
+    { className: 'min-h-screen' },
+    React.createElement(
+      'div',
+      { className: 'container py-8' },
+      [
+        React.createElement(
+          'button',
+          {
+            key: 'back',
+            onClick: () => window.location.hash = 'home',
+            className: 'btn btn-outline gap-2 mb-6',
+            style: { backgroundColor: 'transparent' }
+          },
+          [
+            React.createElement(ArrowLeft, { key: 'icon', size: 16 }),
+            'Back to Recipe'
+          ]
+        ),
+        React.createElement(
+          'div',
+          { key: 'content', className: 'max-w-4xl mx-auto' },
+          [
+            React.createElement(
+              'h1',
+              { key: 'title', className: 'text-3xl font-bold mb-4' },
+              recipe.title
+            ),
+            React.createElement(
+              'div',
+              { key: 'instructions', className: 'space-y-4' },
+              recipe.instructions.map((instruction, index) =>
+                React.createElement(
+                  'div',
+                  {
+                    key: index,
+                    className: 'card p-4'
+                  },
+                  [
+                    React.createElement(
+                      'h3',
+                      {
+                        key: 'step',
+                        className: 'text-lg font-semibold mb-2'
+                      },
+                      `Step ${instruction.step}`
+                    ),
+                    React.createElement(
+                      'p',
+                      { key: 'desc' },
+                      instruction.description
+                    ),
+                    instruction.duration && React.createElement(
+                      'div',
+                      {
+                        key: 'timer',
+                        className: 'mt-2 text-sm',
+                        style: { color: 'var(--muted-foreground)' }
+                      },
+                      `⏱️ ${instruction.duration} minutes`
+                    )
+                  ]
+                )
+              )
+            )
+          ]
+        )
+      ]
+    )
   );
 };
 

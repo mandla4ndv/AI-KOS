@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ChevronLeft, ChevronRight, Play, Pause, Volume2, VolumeX, Check, X, Mic } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Play, Pause, Volume2, VolumeX, Check, X, Mic, Clock } from 'lucide-react';
 import ConfirmationModal from './ConfirmationModal';
-import '../styles/CookingMode.css';
 
 class SpeechService {
   constructor() {

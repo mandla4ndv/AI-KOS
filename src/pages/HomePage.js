@@ -1,18 +1,27 @@
 import React, { useState } from 'react';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, ChefHat } from 'lucide-react';
 import IngredientInput from '../components/IngredientInput';
 import RecipeCard from '../components/RecipeCard';
 import RecipeSkeleton from '../components/RecipeSkeleton';
 import { useToast } from '../contexts/ToastContext';
+import { useAuth } from '../contexts/AuthContext';
 import { generateRecipe } from '../services/recipeService';
 import '../styles/HomePage.css';
-const HomePage = () => {
+
+const HomePage = ({ onAuthRequired }) => {
   const [ingredients, setIngredients] = useState([]);
   const [recipe, setRecipe] = useState(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const { addToast } = useToast();
+  const { user } = useAuth();
 
   const handleGenerateRecipe = async () => {
+    // Check if user is logged in
+    if (!user) {
+      onAuthRequired();
+      return;
+    }
+
     if (ingredients.length < 1) {
       addToast({
         title: 'Add ingredients first',
@@ -122,7 +131,8 @@ const HomePage = () => {
                     React.createElement(IngredientInput, {
                       key: 'input',
                       ingredients: ingredients,
-                      onIngredientsChange: setIngredients
+                      onIngredientsChange: setIngredients,
+                      onAuthRequired: onAuthRequired
                     }),
                     !recipe && !isGenerating && React.createElement(
                       'div',
@@ -185,7 +195,9 @@ const HomePage = () => {
                   [
                     React.createElement(RecipeCard, {
                       key: 'card',
-                      recipe: recipe
+                      recipe: recipe,
+                      userId: user?.uid,
+                      onAuthRequired: onAuthRequired
                     }),
                     React.createElement(
                       'div',
@@ -199,9 +211,12 @@ const HomePage = () => {
                           {
                             key: 'cook',
                             onClick: handleStartCooking,
-                            className: 'btn btn-primary flex-1 btn-lg'
+                            className: 'btn btn-primary btn-lg gap-2 flex-1'
                           },
-                          'Start Cooking'
+                          [
+                            React.createElement(ChefHat, { key: 'icon', size: 20 }),
+                            'Start Cooking'
+                          ]
                         ),
                         React.createElement(
                           'button',

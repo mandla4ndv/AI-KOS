@@ -1,34 +1,82 @@
 import React, { useState } from 'react';
+import { X, Mail, Lock, User } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
-import '../styles/AuthModal.css';
+import { auth } from '../config/firebase-config';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile } from 'firebase/auth';
 
-const AuthModal = ({ open, onOpenChange, mode, onModeChange, onSuccess }) => {
+const AuthModal = ({ open, onOpenChange }) => {
+  const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
+  const { user } = useAuth();
   const { addToast } = useToast();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
 
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    addToast({
-      title: mode === 'login' ? 'Welcome back!' : 'Account created!',
-      description: mode === 'login' ? 'You have successfully logged in.' : 'Your account has been created successfully.',
-    });
-
-    onSuccess({
-      name: mode === 'register' ? name : 'Chef User',
-      email,
-    });
-
-    setLoading(false);
-    setEmail('');
-    setPassword('');
-    setName('');
+    try {
+      if (isLogin) {
+        // Login
+        await signInWithEmailAndPassword(auth, email, password);
+        addToast({
+          title: 'Welcome back!',
+          description: 'Successfully logged in',
+          variant: 'success',
+        });
+      } else {
+        // Register
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        if (name.trim()) {
+          await updateProfile(userCredential.user, {
+            displayName: name.trim()
+          });
+        }
+        addToast({
+          title: 'Account created!',
+          description: 'Welcome to Recipe Generator',
+          variant: 'success',
+        });
+      }
+      onOpenChange(false);
+      setEmail('');
+      setPassword('');
+      setName('');
+    } catch (error) {
+      console.error('Auth error:', error);
+      let message = 'An error occurred during authentication';
+      
+      switch (error.code) {
+        case 'auth/email-already-in-use':
+          message = 'Email is already in use';
+          break;
+        case 'auth/invalid-email':
+          message = 'Invalid email address';
+          break;
+        case 'auth/weak-password':
+          message = 'Password should be at least 6 characters';
+          break;
+        case 'auth/user-not-found':
+          message = 'No account found with this email';
+          break;
+        case 'auth/wrong-password':
+          message = 'Incorrect password';
+          break;
+        default:
+          message = error.message;
+      }
+      
+      addToast({
+        title: 'Authentication failed',
+        description: message,
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (!open) return null;
@@ -42,25 +90,27 @@ const AuthModal = ({ open, onOpenChange, mode, onModeChange, onSuccess }) => {
     React.createElement(
       'div',
       {
-        className: 'glass-card rounded-xl p-6 mx-4 max-w-md w-full animate-scale-in',
-        style: { maxWidth: '400px' }
+        className: 'glass-card rounded-xl p-6 mx-4 max-w-md w-full animate-scale-in'
       },
       [
         React.createElement(
           'div',
-          { key: 'header', className: 'mb-6' },
+          { key: 'header', className: 'flex items-center justify-between mb-6' },
           [
             React.createElement(
               'h2',
-              { key: 'title', className: 'text-2xl font-bold' },
-              mode === 'login' ? 'Welcome Back' : 'Create Account'
+              { key: 'title', className: 'text-xl font-bold' },
+              isLogin ? 'Sign In' : 'Create Account'
             ),
             React.createElement(
-              'p',
-              { key: 'desc', className: 'mt-2', style: { color: 'var(--muted-foreground)' } },
-              mode === 'login' 
-                ? 'Enter your credentials to access your recipes'
-                : 'Sign up to save and manage your recipes'
+              'button',
+              {
+                key: 'close',
+                onClick: () => onOpenChange(false),
+                className: 'btn btn-ghost btn-sm',
+                style: { background: 'none', border: 'none' }
+              },
+              React.createElement(X, { size: 20 })
             )
           ]
         ),
@@ -72,7 +122,7 @@ const AuthModal = ({ open, onOpenChange, mode, onModeChange, onSuccess }) => {
             className: 'space-y-4'
           },
           [
-            mode === 'register' && React.createElement(
+            !isLogin && React.createElement(
               'div',
               { key: 'name', className: 'space-y-2' },
               [
@@ -83,18 +133,33 @@ const AuthModal = ({ open, onOpenChange, mode, onModeChange, onSuccess }) => {
                     htmlFor: 'name',
                     className: 'text-sm font-medium'
                   },
-                  'Name'
+                  'Full Name'
                 ),
-                React.createElement('input', {
-                  key: 'input',
-                  id: 'name',
-                  type: 'text',
-                  placeholder: 'Your name',
-                  value: name,
-                  onChange: (e) => setName(e.target.value),
-                  required: true,
-                  className: 'input'
-                })
+                React.createElement(
+                  'div',
+                  {
+                    key: 'input-container',
+                    className: 'relative'
+                  },
+                  [
+                    React.createElement(User, {
+                      key: 'icon',
+                      size: 16,
+                      className: 'absolute left-3 top-1/2 transform -translate-y-1/2',
+                      style: { color: 'var(--muted-foreground)' }
+                    }),
+                    React.createElement('input', {
+                      key: 'input',
+                      id: 'name',
+                      type: 'text',
+                      placeholder: 'Enter your name',
+                      value: name,
+                      onChange: (e) => setName(e.target.value),
+                      className: 'input pl-10 w-full',
+                      required: !isLogin
+                    })
+                  ]
+                )
               ]
             ),
             React.createElement(
@@ -110,16 +175,31 @@ const AuthModal = ({ open, onOpenChange, mode, onModeChange, onSuccess }) => {
                   },
                   'Email'
                 ),
-                React.createElement('input', {
-                  key: 'input',
-                  id: 'email',
-                  type: 'email',
-                  placeholder: 'chef@example.com',
-                  value: email,
-                  onChange: (e) => setEmail(e.target.value),
-                  required: true,
-                  className: 'input'
-                })
+                React.createElement(
+                  'div',
+                  {
+                    key: 'input-container',
+                    className: 'relative'
+                  },
+                  [
+                    React.createElement(Mail, {
+                      key: 'icon',
+                      size: 16,
+                      className: 'absolute left-3 top-1/2 transform -translate-y-1/2',
+                      style: { color: 'var(--muted-foreground)' }
+                    }),
+                    React.createElement('input', {
+                      key: 'input',
+                      id: 'email',
+                      type: 'email',
+                      placeholder: 'Enter your email',
+                      value: email,
+                      onChange: (e) => setEmail(e.target.value),
+                      className: 'input pl-10 w-full',
+                      required: true
+                    })
+                  ]
+                )
               ]
             ),
             React.createElement(
@@ -135,16 +215,32 @@ const AuthModal = ({ open, onOpenChange, mode, onModeChange, onSuccess }) => {
                   },
                   'Password'
                 ),
-                React.createElement('input', {
-                  key: 'input',
-                  id: 'password',
-                  type: 'password',
-                  placeholder: '••••••••',
-                  value: password,
-                  onChange: (e) => setPassword(e.target.value),
-                  required: true,
-                  className: 'input'
-                })
+                React.createElement(
+                  'div',
+                  {
+                    key: 'input-container',
+                    className: 'relative'
+                  },
+                  [
+                    React.createElement(Lock, {
+                      key: 'icon',
+                      size: 16,
+                      className: 'absolute left-3 top-1/2 transform -translate-y-1/2',
+                      style: { color: 'var(--muted-foreground)' }
+                    }),
+                    React.createElement('input', {
+                      key: 'input',
+                      id: 'password',
+                      type: 'password',
+                      placeholder: 'Enter your password',
+                      value: password,
+                      onChange: (e) => setPassword(e.target.value),
+                      className: 'input pl-10 w-full',
+                      required: true,
+                      minLength: 6
+                    })
+                  ]
+                )
               ]
             ),
             React.createElement(
@@ -152,41 +248,38 @@ const AuthModal = ({ open, onOpenChange, mode, onModeChange, onSuccess }) => {
               {
                 key: 'submit',
                 type: 'submit',
-                className: 'btn btn-primary w-full',
-                disabled: loading
+                disabled: loading,
+                className: 'btn btn-primary w-full gap-2'
               },
-              loading ? 'Processing...' : mode === 'login' ? 'Login' : 'Create Account'
-            ),
+              loading ? 'Please wait...' : (isLogin ? 'Sign In' : 'Create Account')
+            )
+          ]
+        ),
+        React.createElement(
+          'div',
+          {
+            key: 'switch',
+            className: 'text-center mt-4'
+          },
+          [
             React.createElement(
-              'div',
+              'p',
               {
-                key: 'switch',
-                className: 'text-center text-sm',
+                key: 'text',
+                className: 'text-sm',
                 style: { color: 'var(--muted-foreground)' }
               },
-              [
-                React.createElement(
-                  'span',
-                  { key: 'text' },
-                  mode === 'login' ? "Don't have an account? " : "Already have an account? "
-                ),
-                React.createElement(
-                  'button',
-                  {
-                    key: 'button',
-                    type: 'button',
-                    onClick: () => onModeChange(mode === 'login' ? 'register' : 'login'),
-                    className: 'font-medium',
-                    style: { 
-                      color: 'var(--primary)',
-                      background: 'none',
-                      border: 'none',
-                      cursor: 'pointer'
-                    }
-                  },
-                  mode === 'login' ? 'Sign up' : 'Login'
-                )
-              ]
+              isLogin ? "Don't have an account? " : 'Already have an account? '
+            ),
+            React.createElement(
+              'button',
+              {
+                key: 'button',
+                onClick: () => setIsLogin(!isLogin),
+                className: 'text-primary hover:underline font-medium',
+                style: { background: 'none', border: 'none' }
+              },
+              isLogin ? 'Sign up' : 'Sign in'
             )
           ]
         )

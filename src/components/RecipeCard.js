@@ -1,17 +1,36 @@
-import React, { useState } from 'react';
-import { Clock, Users, ChefHat, Heart, Star, Share2, Check, Twitter, Facebook, Link2, MessageCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Clock, Users, ChefHat, Heart, Star, Share2 } from 'lucide-react';
 import { useToast } from '../contexts/ToastContext';
-import { saveRecipe, deleteRecipe, isRecipeSaved, rateRecipe, getRecipeRating } from '../services/storageService';
+import { useAuth } from '../contexts/AuthContext';
+import { saveRecipeToDB, deleteRecipeFromDB, updateRecipeRating, isRecipeSavedForUser } from '../services/databaseService';
 import RatingDialog from './RatingDialog';
+import ShareModal from './ShareModal';
 import '../styles/RecipeCard.css';
 
-const RecipeCard = ({ recipe }) => {
-  const [isSaved, setIsSaved] = useState(isRecipeSaved(recipe.id));
-  const [currentRating, setCurrentRating] = useState(getRecipeRating(recipe.id));
+const RecipeCard = ({ recipe, userId, onAuthRequired }) => {
+  const [isSaved, setIsSaved] = useState(false);
+  const [currentRating, setCurrentRating] = useState(0);
   const [showRatingDialog, setShowRatingDialog] = useState(false);
-  const [showShareMenu, setShowShareMenu] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [loading, setLoading] = useState(false);
   const { addToast } = useToast();
+  const { user } = useAuth();
+
+  // Check if recipe is saved when component mounts
+  useEffect(() => {
+    const checkIfSaved = async () => {
+      if (user && userId) {
+        try {
+          const saved = await isRecipeSavedForUser(userId, recipe.id);
+          setIsSaved(saved);
+        } catch (error) {
+          console.error('Error checking if recipe saved:', error);
+        }
+      }
+    };
+
+    checkIfSaved();
+  }, [user, userId, recipe.id]);
 
   const difficultyColors = {
     Easy: 'badge-secondary',
@@ -19,31 +38,66 @@ const RecipeCard = ({ recipe }) => {
     Hard: 'badge-destructive'
   };
 
-  const handleSave = () => {
-    if (isSaved) {
-      deleteRecipe(recipe.id);
-      setIsSaved(false);
+  const handleSave = async () => {
+    if (!user) {
+      onAuthRequired();
+      return;
+    }
+
+    setLoading(true);
+    try {
+      if (isSaved) {
+        await deleteRecipeFromDB(userId, recipe.id);
+        setIsSaved(false);
+        addToast({
+          title: 'Recipe removed',
+          description: 'Recipe has been removed from your collection',
+        });
+      } else {
+        await saveRecipeToDB(userId, {
+          ...recipe,
+          userRating: currentRating,
+          savedAt: new Date()
+        });
+        setIsSaved(true);
+        addToast({
+          title: 'Recipe saved!',
+          description: 'Added to your recipe collection',
+        });
+      }
+    } catch (error) {
+      console.error('Error saving/deleting recipe:', error);
       addToast({
-        title: 'Recipe removed',
-        description: 'Recipe has been removed from your collection',
+        title: 'Error',
+        description: 'Failed to update recipe. Please try again.',
+        variant: 'destructive',
       });
-    } else {
-      saveRecipe(recipe);
-      setIsSaved(true);
-      addToast({
-        title: 'Recipe saved!',
-        description: 'Added to your recipe collection',
-      });
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleRate = (rating, comment = '') => {
-    rateRecipe(recipe.id, rating);
-    setCurrentRating(rating);
-    addToast({
-      title: 'Rating saved!',
-      description: comment ? `You rated this recipe ${rating} stars with a comment` : `You rated this recipe ${rating} stars`,
-    });
+  const handleRate = async (rating, comment = '') => {
+    if (!user) {
+      onAuthRequired();
+      return;
+    }
+
+    try {
+      await updateRecipeRating(userId, recipe.id, rating, comment);
+      setCurrentRating(rating);
+      addToast({
+        title: 'Rating saved!',
+        description: comment ? `You rated this recipe ${rating} stars with a comment` : `You rated this recipe ${rating} stars`,
+      });
+    } catch (error) {
+      console.error('Error updating rating:', error);
+      addToast({
+        title: 'Error',
+        description: 'Failed to save rating. Please try again.',
+        variant: 'destructive',
+      });
+    }
   };
 
   const handleStartCooking = () => {
@@ -53,42 +107,6 @@ const RecipeCard = ({ recipe }) => {
       title: 'Cooking mode started!',
       description: 'Enjoy cooking your recipe',
     });
-  };
-
-  const handleCopyLink = () => {
-    const url = window.location.href.split('#')[0] + `#recipe-${recipe.id}`;
-    navigator.clipboard.writeText(url);
-    setCopied(true);
-    setShowShareMenu(false);
-    setTimeout(() => setCopied(false), 2000);
-    addToast({
-      title: 'Link copied!',
-      description: 'Recipe link copied to clipboard',
-    });
-  };
-
-  const handleShareTwitter = () => {
-    const text = `Check out this delicious ${recipe.title} recipe!`;
-    const url = window.location.href.split('#')[0] + `#recipe-${recipe.id}`;
-    const shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
-    window.open(shareUrl, '_blank', 'width=550,height=420');
-    setShowShareMenu(false);
-  };
-
-  const handleShareFacebook = () => {
-    const text = `Check out this delicious ${recipe.title} recipe!`;
-    const url = window.location.href.split('#')[0] + `#recipe-${recipe.id}`;
-    const shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}&quote=${encodeURIComponent(text)}`;
-    window.open(shareUrl, '_blank', 'width=550,height=420');
-    setShowShareMenu(false);
-  };
-
-  const handleShareWhatsApp = () => {
-    const text = `Check out this delicious ${recipe.title} recipe!`;
-    const url = window.location.href.split('#')[0] + `#recipe-${recipe.id}`;
-    const shareUrl = `https://wa.me/?text=${encodeURIComponent(text + ' ' + url)}`;
-    window.open(shareUrl, '_blank');
-    setShowShareMenu(false);
   };
 
   const StarRatingDisplay = ({ rating, size = 16 }) => {
@@ -103,85 +121,6 @@ const RecipeCard = ({ recipe }) => {
           color: star <= rating ? 'var(--primary)' : 'var(--muted-foreground)'
         })
       )
-    );
-  };
-
-  const ShareMenu = () => {
-    return React.createElement(
-      'div',
-      { className: 'relative' },
-      [
-        React.createElement(
-          'button',
-          {
-            key: 'trigger',
-            onClick: () => setShowShareMenu(!showShareMenu),
-            className: 'btn btn-outline btn-sm gap-2',
-            style: { backgroundColor: 'transparent' }
-          },
-          [
-            React.createElement(Share2, { key: 'icon', size: 16 }),
-            'Share'
-          ]
-        ),
-        showShareMenu && React.createElement(
-          'div',
-          {
-            key: 'menu',
-            className: 'absolute top-full right-0 mt-2 glass-card rounded-lg p-2 w-56 z-10 animate-scale-in'
-          },
-          [
-            React.createElement(
-              'button',
-              {
-                key: 'copy',
-                onClick: handleCopyLink,
-                className: 'btn btn-ghost w-full justify-start gap-2'
-              },
-              [
-                copied ? React.createElement(Check, { key: 'icon', size: 16, color: 'var(--primary)' }) : React.createElement(Link2, { key: 'icon', size: 16 }),
-                copied ? 'Copied!' : 'Copy Link'
-              ]
-            ),
-            React.createElement(
-              'button',
-              {
-                key: 'twitter',
-                onClick: handleShareTwitter,
-                className: 'btn btn-ghost w-full justify-start gap-2'
-              },
-              [
-                React.createElement(Twitter, { key: 'icon', size: 16 }),
-                'Share on Twitter'
-              ]
-            ),
-            React.createElement(
-              'button',
-              {
-                key: 'facebook',
-                onClick: handleShareFacebook,
-                className: 'btn btn-ghost w-full justify-start gap-2'
-              },
-              [
-                React.createElement(Facebook, { key: 'icon', size: 16 }),
-                'Share on Facebook'
-              ]
-            ),
-            React.createElement(
-              'button',
-              {
-                key: 'whatsapp',
-                onClick: handleShareWhatsApp,
-                className: 'btn btn-ghost w-full justify-start gap-2'
-              },
-              [
-                React.createElement(MessageCircle, { key: 'icon', size: 16 }),
-                'Share on WhatsApp'
-              ]
-            )
-          ]
-        )
-      ]
     );
   };
 
@@ -410,6 +349,7 @@ const RecipeCard = ({ recipe }) => {
                     {
                       key: 'save',
                       onClick: handleSave,
+                      disabled: loading,
                       className: `btn btn-sm gap-2 transition-all hover:scale-105 ${isSaved ? 'btn-primary' : 'btn-outline'}`,
                       style: isSaved ? {} : { backgroundColor: 'transparent' }
                     },
@@ -419,14 +359,14 @@ const RecipeCard = ({ recipe }) => {
                         size: 16,
                         fill: isSaved ? 'currentColor' : 'none'
                       }),
-                      isSaved ? 'Saved' : 'Save'
+                      loading ? '...' : (isSaved ? 'Saved' : 'Save')
                     ]
                   ),
                   React.createElement(
                     'button',
                     {
                       key: 'rate',
-                      onClick: () => setShowRatingDialog(true),
+                      onClick: () => user ? setShowRatingDialog(true) : onAuthRequired(),
                       className: 'btn btn-outline btn-sm gap-2',
                       style: { backgroundColor: 'transparent' }
                     },
@@ -444,7 +384,19 @@ const RecipeCard = ({ recipe }) => {
                       }) : 'Rate'
                     ]
                   ),
-                  React.createElement(ShareMenu, { key: 'share' })
+                  React.createElement(
+                    'button',
+                    {
+                      key: 'share',
+                      onClick: () => setShowShareModal(true),
+                      className: 'btn btn-outline btn-sm gap-2',
+                      style: { backgroundColor: 'transparent' }
+                    },
+                    [
+                      React.createElement(Share2, { key: 'icon', size: 16 }),
+                      'Share'
+                    ]
+                  )
                 ]
               )
             ]
@@ -458,6 +410,12 @@ const RecipeCard = ({ recipe }) => {
         recipeTitle: recipe.title,
         currentRating: currentRating,
         onRate: handleRate
+      }),
+      React.createElement(ShareModal, {
+        key: 'share-modal',
+        open: showShareModal,
+        onOpenChange: setShowShareModal,
+        recipe: recipe
       })
     ]
   );

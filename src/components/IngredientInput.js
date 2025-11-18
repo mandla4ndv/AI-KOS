@@ -1,10 +1,11 @@
 import React, { useState, useRef } from 'react';
 import { X, Upload, ImageIcon, Edit2 } from 'lucide-react';
 import { useToast } from '../contexts/ToastContext';
+import { useAuth } from '../contexts/AuthContext';
 import { detectIngredientsFromImage } from '../services/recipeService';
 import '../styles/IngredientInput.css';
 
-const IngredientInput = ({ ingredients, onIngredientsChange }) => {
+const IngredientInput = ({ ingredients, onIngredientsChange, onAuthRequired }) => {
   const [inputValue, setInputValue] = useState('');
   const [isDragging, setIsDragging] = useState(false);
   const [isProcessingImage, setIsProcessingImage] = useState(false);
@@ -13,6 +14,7 @@ const IngredientInput = ({ ingredients, onIngredientsChange }) => {
   const [editValue, setEditValue] = useState('');
   const fileInputRef = useRef(null);
   const { addToast } = useToast();
+  const { user } = useAuth();
 
   const addIngredient = () => {
     const trimmed = inputValue.trim().toLowerCase();
@@ -77,6 +79,12 @@ const IngredientInput = ({ ingredients, onIngredientsChange }) => {
     e.preventDefault();
     setIsDragging(false);
 
+    // Check authentication for image upload
+    if (!user) {
+      onAuthRequired();
+      return;
+    }
+
     const files = Array.from(e.dataTransfer.files);
     const imageFile = files.find((f) => f.type.startsWith('image/'));
 
@@ -92,6 +100,12 @@ const IngredientInput = ({ ingredients, onIngredientsChange }) => {
   };
 
   const handleFileSelect = async (e) => {
+    // Check authentication for image upload
+    if (!user) {
+      onAuthRequired();
+      return;
+    }
+
     const file = e.target.files?.[0];
     if (file) {
       await processImage(file);

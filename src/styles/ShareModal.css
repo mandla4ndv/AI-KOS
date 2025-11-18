@@ -1,0 +1,319 @@
+.share-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  padding: 1rem;
+  animation: fade-in 0.2s ease-out;
+}
+
+.share-modal-content {
+  background: hsl(var(--background));
+  border-radius: 0.75rem;
+  border: 1px solid hsl(var(--border));
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  width: 100%;
+  max-width: 28rem;
+  animation: scale-in 0.2s ease-out;
+  position: relative;
+}
+
+.share-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 1.5rem 1.5rem 1rem;
+}
+
+.share-modal-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.75rem;
+  margin: 0;
+}
+
+.share-modal-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  border-radius: 0.375rem;
+  padding: 0.375rem;
+  color: hsl(var(--muted-foreground));
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.share-modal-close:hover {
+  color: hsl(var(--foreground));
+  background-color: hsl(var(--accent));
+}
+
+.share-modal-description {
+  padding: 0 1.5rem 1.5rem;
+  color: hsl(var(--muted-foreground));
+  line-height: 1.625;
+  margin: 0;
+  text-align: center;
+}
+
+.share-options-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+  padding: 0 1.5rem;
+}
+
+.share-option-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  background: none;
+  border: 1px solid hsl(var(--border));
+  border-radius: 0.5rem;
+  padding: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  min-height: 88px;
+  color: hsl(var(--foreground));
+}
+
+.share-option-button:hover {
+  background-color: hsl(var(--accent));
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.share-option-icon {
+  transition: all 0.2s ease-in-out;
+}
+
+.share-option-button:hover .share-option-icon {
+  transform: scale(1.1);
+}
+
+.share-option-name {
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-align: center;
+}
+
+.share-link-section {
+  margin: 1.5rem;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  background-color: hsl(var(--muted));
+}
+
+.share-link-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: hsl(var(--muted-foreground));
+  margin-bottom: 0.5rem;
+}
+
+.share-link-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.share-link-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: hsl(var(--foreground));
+  font-size: 0.75rem;
+  padding: 0.25rem 0;
+  font-family: monospace;
+}
+
+.share-link-input::placeholder {
+  color: hsl(var(--muted-foreground));
+}
+
+.share-link-copy-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  border-radius: 0.375rem;
+  padding: 0.375rem;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  color: hsl(var(--muted-foreground));
+  min-width: 32px;
+  min-height: 32px;
+}
+
+.share-link-copy-button:hover {
+  color: hsl(var(--primary));
+  background-color: hsl(var(--accent));
+}
+
+/* Success state for copy button */
+.share-link-copy-button.copied {
+  color: #22c55e;
+}
+
+/* Platform-specific hover colors */
+.share-option-button[data-platform="twitter"]:hover {
+  border-color: #1DA1F2;
+  background-color: rgba(29, 161, 242, 0.05);
+}
+
+.share-option-button[data-platform="facebook"]:hover {
+  border-color: #1877F2;
+  background-color: rgba(24, 119, 242, 0.05);
+}
+
+.share-option-button[data-platform="whatsapp"]:hover {
+  border-color: #25D366;
+  background-color: rgba(37, 211, 102, 0.05);
+}
+
+.share-option-button[data-platform="email"]:hover {
+  border-color: hsl(var(--primary));
+  background-color: hsl(var(--primary) / 0.05);
+}
+
+/* Mobile optimizations */
+@media (max-width: 640px) {
+  .share-modal-overlay {
+    padding: 0.5rem;
+    align-items: flex-end;
+  }
+  
+  .share-modal-content {
+    margin-bottom: 1rem;
+    max-width: none;
+  }
+  
+  .share-options-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+  }
+  
+  .share-option-button {
+    padding: 0.75rem 0.5rem;
+    min-height: 80px;
+  }
+  
+  .share-option-name {
+    font-size: 0.75rem;
+  }
+  
+  .share-option-button svg {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .share-modal-header {
+    padding: 1.25rem 1.25rem 0.75rem;
+  }
+  
+  .share-modal-description {
+    padding: 0 1.25rem 1.25rem;
+  }
+  
+  .share-options-grid {
+    padding: 0 1.25rem;
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .share-link-section {
+    margin: 1.25rem;
+  }
+  
+  .share-modal-title {
+    font-size: 1.125rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .share-options-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .share-option-button {
+    min-height: 72px;
+    padding: 0.5rem;
+  }
+  
+  .share-option-name {
+    font-size: 0.625rem;
+  }
+  
+  .share-option-button svg {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+/* Copy success animation */
+@keyframes copy-success {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.share-link-copy-button.copied svg {
+  animation: copy-success 0.3s ease-out;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .share-modal-content {
+    border-width: 2px;
+  }
+  
+  .share-option-button {
+    border-width: 2px;
+  }
+  
+  .share-link-section {
+    border: 1px solid currentColor;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .share-modal-overlay,
+  .share-modal-content,
+  .share-option-button,
+  .share-option-icon,
+  .share-link-copy-button {
+    animation: none;
+    transition: none;
+  }
+  
+  .share-option-button:hover {
+    transform: none;
+  }
+  
+  .share-option-button:hover .share-option-icon {
+    transform: none;
+  }
+  
+  .share-link-copy-button.copied svg {
+    animation: none;
+  }
+}

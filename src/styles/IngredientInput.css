@@ -1,30 +1,32 @@
-.ingredient-input {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
+.ingredient-input-container {
+  width: 100%;
+  space-y: 1rem;
 }
 
-.input-section {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+.ingredient-input-section {
+  space-y: 0.5rem;
 }
 
-.input-label {
+.ingredient-input-label {
   font-size: 0.875rem;
   font-weight: 500;
+  color: hsl(var(--foreground));
+  display: block;
+  margin-bottom: 0.5rem;
 }
 
-.input-row {
+.ingredient-input-row {
   display: flex;
   gap: 0.5rem;
+  width: 100%;
 }
 
-.ingredient-field {
+.ingredient-input-field {
   flex: 1;
+  min-width: 0;
 }
 
-.add-button {
+.ingredient-add-button {
   flex-shrink: 0;
 }
 
@@ -32,150 +34,285 @@
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
+  align-items: flex-start;
 }
 
-.ingredient-tag {
-  display: flex;
+.ingredient-badge {
+  display: inline-flex;
   align-items: center;
   gap: 0.375rem;
-  border-radius: 20px;
+  background-color: hsl(var(--secondary));
+  color: hsl(var(--secondary-foreground));
+  border-radius: 9999px;
   padding: 0.375rem 0.75rem;
-  font-size: 14px;
-  background-color: var(--secondary);
-  color: var(--secondary-foreground);
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s ease-in-out;
   border: 1px solid transparent;
+  min-height: 32px;
 }
 
-.ingredient-edit {
+.ingredient-badge:hover {
+  background-color: hsl(var(--secondary) / 0.8);
+  transform: translateY(-1px);
+}
+
+.ingredient-badge-actions {
   display: flex;
   align-items: center;
   gap: 0.25rem;
-  border-radius: 20px;
-  padding: 0.375rem 0.75rem;
-  background-color: var(--secondary);
-  color: var(--secondary-foreground);
+  margin-left: 0.25rem;
 }
 
-.edit-input {
-  height: 1.5rem;
-  width: 8rem;
-  font-size: 0.875rem;
-  padding: 0 0.5rem;
-  background-color: transparent;
+.ingredient-edit-button,
+.ingredient-remove-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  border-radius: 50%;
+  padding: 0.125rem;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  color: inherit;
+  min-width: 20px;
+  min-height: 20px;
+}
+
+.ingredient-edit-button:hover {
+  color: hsl(var(--primary));
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.ingredient-remove-button:hover {
+  color: hsl(var(--destructive));
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.ingredient-edit-input {
+  background: transparent;
   border: none;
   outline: none;
   color: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  width: 8rem;
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
 }
 
-.edit-button {
-  padding: 0 0.25rem;
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 0.75rem;
+.ingredient-edit-input::placeholder {
+  color: hsl(var(--muted-foreground));
 }
 
-.save-button {
-  color: #22c55e;
-}
-
-.cancel-button {
-  color: #ef4444;
-}
-
-.tag-actions {
+.ingredient-edit-actions {
   display: flex;
   align-items: center;
-  gap: 0.25rem;
+  gap: 0.125rem;
+  margin-left: 0.25rem;
 }
 
-.edit-tag-button {
-  opacity: 0.6;
-  transition: opacity 0.2s ease;
+.ingredient-save-button,
+.ingredient-cancel-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background: none;
   border: none;
+  border-radius: 50%;
+  padding: 0.25rem;
   cursor: pointer;
-  color: var(--primary);
-  padding: 0.125rem;
+  transition: all 0.2s ease-in-out;
+  min-width: 20px;
+  min-height: 20px;
 }
 
-.edit-tag-button:hover {
-  opacity: 1;
+.ingredient-save-button:hover {
+  color: #22c55e;
+  background-color: rgba(255, 255, 255, 0.2);
 }
 
-.remove-tag-button {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0.125rem;
-  transition: color 0.2s ease;
-}
-
-.remove-tag-button:hover {
-  color: var(--destructive);
+.ingredient-cancel-button:hover {
+  color: #ef4444;
+  background-color: rgba(255, 255, 255, 0.2);
 }
 
 .upload-area {
-  border: 2px dashed var(--border);
-  border-radius: 0.5rem;
-  transition: border-color 0.2s ease, opacity 0.2s ease;
+  border: 2px dashed hsl(var(--border));
+  border-radius: 0.75rem;
+  transition: all 0.3s ease-in-out;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
 }
 
 .upload-area.dragging {
-  border-color: var(--primary);
+  border-color: hsl(var(--primary));
+  background-color: hsl(var(--primary) / 0.05);
 }
 
 .upload-area.processing {
   opacity: 0.5;
+  pointer-events: none;
 }
 
-.upload-content {
-  padding: 2rem;
+.upload-area-content {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 1rem;
+  padding: 2rem;
   text-align: center;
 }
 
+.upload-area-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 4rem;
+  height: 4rem;
+  border-radius: 50%;
+  background-color: hsl(var(--accent));
+  color: hsl(var(--accent-foreground));
+}
+
+.upload-area-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.upload-area-title {
+  font-weight: 500;
+  color: hsl(var(--foreground));
+}
+
+.upload-area-subtitle {
+  font-size: 0.875rem;
+  color: hsl(var(--muted-foreground));
+  line-height: 1.25rem;
+}
+
+.upload-area-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 44px;
+}
+
+.upload-area-file-input {
+  display: none;
+}
+
 .processing-spinner {
-  height: 3rem;
   width: 3rem;
+  height: 3rem;
+  border: 4px solid hsl(var(--primary));
+  border-top: 4px solid transparent;
+  border-radius: 50%;
   animation: spin 1s linear infinite;
-  border-radius: 9999px;
-  border: 4px solid var(--primary);
-  border-top-color: transparent;
 }
 
 .processing-text {
   font-size: 0.875rem;
-  color: var(--muted-foreground);
+  color: hsl(var(--muted-foreground));
 }
 
-.upload-icon {
-  border-radius: 9999px;
-  padding: 1rem;
-  background-color: var(--accent);
-  color: var(--accent-foreground);
+/* Mobile optimizations */
+@media (max-width: 640px) {
+  .ingredient-input-row {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .ingredient-add-button {
+    width: 100%;
+  }
+  
+  .upload-area-content {
+    padding: 1.5rem;
+  }
+  
+  .upload-area-icon {
+    width: 3rem;
+    height: 3rem;
+  }
+  
+  .upload-area-icon svg {
+    width: 1.5rem;
+    height: 1.5rem;
+  }
 }
 
-.upload-text h3 {
-  font-weight: 500;
-  margin-bottom: 0.25rem;
+@media (max-width: 480px) {
+  .ingredients-list {
+    gap: 0.375rem;
+  }
+  
+  .ingredient-badge {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    min-height: 28px;
+  }
+  
+  .upload-area-content {
+    padding: 1rem;
+  }
+  
+  .upload-area-text {
+    font-size: 0.875rem;
+  }
 }
 
-.upload-text p {
-  font-size: 0.875rem;
-  color: var(--muted-foreground);
+/* Animation for file upload */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
-.upload-button {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+/* Drag and drop visual feedback */
+.upload-area.dragging::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: hsl(var(--primary) / 0.1);
+  border: 2px solid hsl(var(--primary));
+  border-radius: 0.75rem;
+  animation: pulse 2s infinite;
 }
 
-.file-input {
-  display: none;
+/* Accessibility improvements */
+.ingredient-edit-input:focus {
+  box-shadow: 0 0 0 2px hsl(var(--ring));
+}
+
+.upload-area:focus-within {
+  border-color: hsl(var(--ring));
+  box-shadow: 0 0 0 2px hsl(var(--ring) / 0.2);
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .ingredient-badge,
+  .ingredient-edit-button,
+  .ingredient-remove-button,
+  .ingredient-save-button,
+  .ingredient-cancel-button,
+  .upload-area {
+    transition: none;
+  }
+  
+  .processing-spinner {
+    animation: none;
+    border-top-color: hsl(var(--primary));
+  }
+  
+  .upload-area.dragging::before {
+    animation: none;
+  }
 }

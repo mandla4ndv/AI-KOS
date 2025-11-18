@@ -1,17 +1,45 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Menu, X, ChefHat, User } from 'lucide-react';
+import { signOut } from 'firebase/auth';
+import { auth } from '../config/firebase-config';
 import AuthModal from './AuthModal';
 import '../styles/Header.css';
 
-const Header = ({ currentPage, onNavigate }) => {
+const Header = ({ currentPage, onPageChange, onAuthClick }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState('login');
   const [user, setUser] = useState(null);
 
+  // Listen for auth state changes
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (user) {
+        setUser({
+          uid: user.uid,
+          name: user.displayName || 'Chef User',
+          email: user.email
+        });
+      } else {
+        setUser(null);
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
   const openAuthModal = (mode) => {
     setAuthMode(mode);
     setAuthModalOpen(true);
+  };
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      setUser(null);
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
   };
 
   const navItems = [
@@ -39,7 +67,7 @@ const Header = ({ currentPage, onNavigate }) => {
               'button',
               {
                 key: 'logo',
-                onClick: () => onNavigate('home'),
+                onClick: () => onPageChange('home'),
                 className: 'header-logo'
               },
               [
@@ -59,7 +87,7 @@ const Header = ({ currentPage, onNavigate }) => {
                   'button',
                   {
                     key: item.key,
-                    onClick: () => onNavigate(item.key),
+                    onClick: () => onPageChange(item.key),
                     className: `nav-button ${currentPage === item.key ? 'active' : ''}`
                   },
                   item.label
@@ -85,7 +113,7 @@ const Header = ({ currentPage, onNavigate }) => {
                     'button',
                     {
                       key: 'logout',
-                      onClick: () => setUser(null),
+                      onClick: handleLogout,
                       className: 'user-logout-button'
                     },
                     'Logout'
@@ -94,7 +122,7 @@ const Header = ({ currentPage, onNavigate }) => {
               ) : React.createElement(
                 'button',
                 {
-                  onClick: () => openAuthModal('login'),
+                  onClick: onAuthClick,
                   className: 'user-login-button'
                 },
                 React.createElement(User, { size: 20 })
@@ -127,7 +155,7 @@ const Header = ({ currentPage, onNavigate }) => {
               {
                 key: item.key,
                 onClick: () => {
-                  onNavigate(item.key);
+                  onPageChange(item.key);
                   setMobileMenuOpen(false);
                 },
                 className: `mobile-nav-button ${currentPage === item.key ? 'active' : ''}`
@@ -140,7 +168,7 @@ const Header = ({ currentPage, onNavigate }) => {
               {
                 key: 'mobile-login',
                 onClick: () => {
-                  openAuthModal('login');
+                  onAuthClick();
                   setMobileMenuOpen(false);
                 },
                 className: 'mobile-login-button'
@@ -151,7 +179,7 @@ const Header = ({ currentPage, onNavigate }) => {
               {
                 key: 'mobile-logout',
                 onClick: () => {
-                  setUser(null);
+                  handleLogout();
                   setMobileMenuOpen(false);
                 },
                 className: 'mobile-logout-button'

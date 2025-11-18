@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { Clock, Trash2, ChefHat, Star } from 'lucide-react';
-import { deleteRecipe, updateRecipeRating } from '../services/storageService';
+import { useAuth } from '../contexts/AuthContext';
+import { deleteRecipeFromDB, updateRecipeRating } from '../services/databaseService';
 import { useToast } from '../contexts/ToastContext';
 import '../styles/SavedRecipeCard.css';
 
-const SavedRecipeCard = ({ recipe, onDelete }) => {
+const SavedRecipeCard = ({ recipe, userId, onDelete, onAuthRequired }) => {
   const [isDeleting, setIsDeleting] = useState(false);
+  const { user } = useAuth();
   const { addToast } = useToast();
 
   const difficultyColors = {
@@ -15,28 +17,57 @@ const SavedRecipeCard = ({ recipe, onDelete }) => {
   };
 
   const handleDelete = async () => {
+    if (!user) {
+      onAuthRequired();
+      return;
+    }
+
     if (confirm(`Delete "${recipe.title}"?`)) {
       setIsDeleting(true);
-      deleteRecipe(recipe.id);
-      addToast({
-        title: 'Recipe deleted',
-        description: 'The recipe has been removed from your collection',
-      });
-      onDelete();
+      try {
+        await deleteRecipeFromDB(userId, recipe.id);
+        onDelete();
+      } catch (error) {
+        console.error('Error deleting recipe:', error);
+        addToast({
+          title: 'Error deleting recipe',
+          description: 'Failed to delete the recipe',
+          variant: 'destructive',
+        });
+        setIsDeleting(false);
+      }
     }
   };
 
-  const handleRatingChange = (newRating) => {
-    updateRecipeRating(recipe.id, newRating);
-    addToast({
-      title: 'Rating updated',
-      description: 'Your rating has been saved',
-    });
+  const handleRatingChange = async (newRating) => {
+    if (!user) {
+      onAuthRequired();
+      return;
+    }
+
+    try {
+      await updateRecipeRating(userId, recipe.id, newRating);
+      addToast({
+        title: 'Rating updated',
+        description: 'Your rating has been saved',
+      });
+    } catch (error) {
+      console.error('Error updating rating:', error);
+      addToast({
+        title: 'Error updating rating',
+        description: 'Failed to save your rating',
+        variant: 'destructive',
+      });
+    }
   };
 
   const handleCookAgain = () => {
     sessionStorage.setItem('currentRecipe', JSON.stringify(recipe));
-    window.location.href = '/#cook';
+    window.location.hash = 'cook';
+    addToast({
+      title: 'Cooking mode started!',
+      description: 'Enjoy cooking your recipe',
+    });
   };
 
   const StarRating = ({ rating, onRatingChange, size = 16 }) => {
@@ -134,7 +165,7 @@ const SavedRecipeCard = ({ recipe, onDelete }) => {
             'div',
             { key: 'rating' },
             React.createElement(StarRating, {
-              rating: recipe.userRating,
+              rating: recipe.userRating || 0,
               onRatingChange: handleRatingChange,
               size: 16
             })
@@ -166,7 +197,12 @@ const SavedRecipeCard = ({ recipe, onDelete }) => {
               className: 'btn btn-outline btn-sm',
               style: { backgroundColor: 'transparent' }
             },
-            React.createElement(Trash2, { size: 16 })
+            isDeleting 
+              ? React.createElement('div', {
+                  key: 'spinner',
+                  className: 'h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent'
+                })
+              : React.createElement(Trash2, { key: 'icon', size: 16 })
           )
         ]
       )

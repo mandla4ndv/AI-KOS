@@ -1,90 +1,155 @@
 import React, { useState, useEffect } from 'react';
 import Header from './components/Header';
-import HomePage from './pages/HomePage';
-import ExplorePage from './pages/ExplorePage';
-import MyRecipesPage from './pages/MyRecipesPage';
-import AboutPage from './pages/AboutPage';
-import CookPage from './pages/CookPage';
-import Toast from './components/Toast';
+import AuthModal from './components/AuthModal';
+import CookingMode from './components/CookingMode';
+import { AuthProvider } from './contexts/AuthContext';
 import { ToastProvider } from './contexts/ToastContext';
-import './index.css';
-import './styles/components.css';
-import './styles/layout.css';
+import HomePage from './pages/HomePage';
+import MyRecipesPage from './pages/MyRecipesPage';
+import CookPage from './pages/CookPage';
+import ExplorePage from './pages/ExplorePage';
+import AboutPage from './pages/AboutPage';
+import './App.css';
 
-function App() {
-  const [currentPage, setCurrentPage] = useState('home');
-  const [toasts, setToasts] = useState([]);
+const App = () => {
+  const [activePage, setActivePage] = useState('home');
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [currentRecipe, setCurrentRecipe] = useState(null);
+  const [showCookingMode, setShowCookingMode] = useState(false);
 
+  // Handle hash-based routing
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.replace('#', '');
-      if (hash && ['home', 'explore', 'my-recipes', 'about', 'cook'].includes(hash)) {
-        setCurrentPage(hash);
+      
+      if (hash === 'cook') {
+        const savedRecipe = sessionStorage.getItem('currentRecipe');
+        if (savedRecipe) {
+          try {
+            const recipe = JSON.parse(savedRecipe);
+            setCurrentRecipe(recipe);
+            setShowCookingMode(true);
+          } catch (error) {
+            console.error('Error parsing saved recipe:', error);
+            window.location.hash = 'home';
+          }
+        } else {
+          window.location.hash = 'home';
+        }
       } else {
-        window.location.hash = 'home';
-        setCurrentPage('home');
+        setShowCookingMode(false);
+        setActivePage(hash || 'home');
       }
     };
 
+    // Initial check
     handleHashChange();
+
+    // Listen for hash changes
     window.addEventListener('hashchange', handleHashChange);
-    
-    return () => {
-      window.removeEventListener('hashchange', handleHashChange);
-    };
+    return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
-  const addToast = (toast) => {
-    const id = Date.now().toString();
-    setToasts(prev => [...prev, { ...toast, id }]);
-    setTimeout(() => {
-      removeToast(id);
-    }, 3000);
+  const handleStartCooking = (recipe) => {
+    sessionStorage.setItem('currentRecipe', JSON.stringify(recipe));
+    setCurrentRecipe(recipe);
+    setShowCookingMode(true);
+    window.location.hash = 'cook';
   };
 
-  const removeToast = (id) => {
-    setToasts(prev => prev.filter(toast => toast.id !== id));
-  };
-
-  const renderPage = () => {
-    switch (currentPage) {
-      case 'explore':
-        return React.createElement(ExplorePage, { key: 'explore-page' });
-      case 'my-recipes':
-        return React.createElement(MyRecipesPage, { key: 'my-recipes-page' });
-      case 'about':
-        return React.createElement(AboutPage, { key: 'about-page' });
-      case 'cook':
-        return React.createElement(CookPage, { key: 'cook-page' });
-      default:
-        return React.createElement(HomePage, { key: 'home-page' });
+  const handleCompleteCooking = () => {
+    setShowCookingMode(false);
+    setCurrentRecipe(null);
+    sessionStorage.removeItem('currentRecipe');
+    window.location.hash = 'home';
+    
+    // Show completion toast
+    if (window.toastContext) {
+      window.toastContext.addToast({
+        title: 'Cooking completed!',
+        description: 'Great job! Recipe has been saved to your collection.',
+        variant: 'success',
+      });
     }
   };
 
+  const handleExitCooking = () => {
+    setShowCookingMode(false);
+    setCurrentRecipe(null);
+    sessionStorage.removeItem('currentRecipe');
+    window.location.hash = 'home';
+  };
+
+  const renderPage = () => {
+    if (showCookingMode && currentRecipe) {
+      return React.createElement(CookingMode, {
+        key: 'cooking-mode',
+        recipe: currentRecipe,
+        onComplete: handleCompleteCooking,
+        onExit: handleExitCooking
+      });
+    }
+
+    switch (activePage) {
+      case 'home':
+        return React.createElement(HomePage, { 
+          key: 'home',
+          onAuthRequired: () => setShowAuthModal(true),
+          onStartCooking: handleStartCooking
+        });
+      case 'explore':
+        return React.createElement(ExplorePage, { 
+          key: 'explore',
+          onStartCooking: handleStartCooking
+        });
+      case 'my-recipes':
+        return React.createElement(MyRecipesPage, { 
+          key: 'my-recipes',
+          onAuthRequired: () => setShowAuthModal(true),
+          onStartCooking: handleStartCooking
+        });
+      case 'about':
+        return React.createElement(AboutPage, { key: 'about' });
+      default:
+        return React.createElement(HomePage, { 
+          key: 'home',
+          onAuthRequired: () => setShowAuthModal(true),
+          onStartCooking: handleStartCooking
+        });
+    }
+  };
+
+  // Store toast context globally for access in completion handler
+  const handleToastProviderMount = (toastContext) => {
+    window.toastContext = toastContext;
+  };
+
   return React.createElement(
-    ToastProvider,
-    { value: { addToast, removeToast } },
+    React.Fragment,
+    null,
     React.createElement(
-      'div',
-      { 
-        className: 'min-h-screen',
-        style: { backgroundColor: 'var(--background)' }
-      },
-      [
-        React.createElement(Header, {
-          key: 'header',
-          currentPage: currentPage,
-          onNavigate: setCurrentPage
-        }),
-        renderPage(),
-        React.createElement(Toast, {
-          key: 'toast',
-          toasts: toasts,
-          onRemove: removeToast
-        })
-      ]
+      ToastProvider,
+      { onMount: handleToastProviderMount },
+      React.createElement(
+        AuthProvider,
+        null,
+        [
+          !showCookingMode && React.createElement(Header, {
+            key: 'header',
+            currentPage: activePage,
+            onPageChange: setActivePage,
+            onAuthClick: () => setShowAuthModal(true)
+          }),
+          React.createElement('main', { key: 'main' }, renderPage()),
+          React.createElement(AuthModal, {
+            key: 'auth-modal',
+            open: showAuthModal,
+            onOpenChange: setShowAuthModal
+          })
+        ]
+      )
     )
   );
-}
+};
 
 export default App;
