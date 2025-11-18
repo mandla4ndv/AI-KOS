@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Menu, X, ChefHat, User } from 'lucide-react';
+import { Menu, X, User } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 import { auth } from '../config/firebase-config';
 import AuthModal from './AuthModal';
@@ -71,7 +71,12 @@ const Header = ({ currentPage, onPageChange, onAuthClick }) => {
                 className: 'header-logo'
               },
               [
-                React.createElement(ChefHat, { key: 'icon', size: 28 }),
+                React.createElement('img', {
+                  key: 'logo-image',
+                  src: '/logoKos1.png',
+                  alt: 'AI-KOS Logo',
+                  className: 'header-logo-image'
+                }),
                 React.createElement(
                   'span',
                   { key: 'text' },

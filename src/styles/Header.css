@@ -41,6 +41,18 @@
   transform: scale(1.05);
 }
 
+.header-logo-image {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  border-radius: 8px;
+  transition: transform 0.2s ease-in-out;
+}
+
+.header-logo:hover .header-logo-image {
+  transform: scale(1.1);
+}
+
 .header-nav {
   display: none;
   align-items: center;
@@ -277,9 +289,9 @@
     font-size: 1.25rem;
   }
   
-  .header-logo svg {
-    width: 24px;
-    height: 24px;
+  .header-logo-image {
+    width: 28px;
+    height: 28px;
   }
   
   .mobile-nav-container {
@@ -310,5 +322,9 @@
   
   .mobile-nav {
     animation: none;
+  }
+  
+  .header-logo-image {
+    transition: none;
   }
 }

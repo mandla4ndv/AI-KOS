@@ -49,10 +49,10 @@ const MyRecipesPage = ({ onAuthRequired }) => {
   if (!user) {
     return React.createElement(
       'div',
-      { className: 'min-h-screen flex flex-col' },
+      { className: 'min-h-screen bg-background' },
       React.createElement(
         'main',
-        { className: 'flex-1', style: { backgroundColor: 'var(--muted)', opacity: 0.3 } },
+        { className: 'flex-1' },
         React.createElement(
           'div',
           { className: 'container py-8 md:py-12' },
@@ -60,23 +60,22 @@ const MyRecipesPage = ({ onAuthRequired }) => {
             'div',
             {
               key: 'not-logged-in',
-              className: 'flex flex-col items-center justify-center py-16 px-4'
+              className: 'my-recipes-login-required'
             },
             [
               React.createElement(
                 'div',
                 {
                   key: 'icon',
-                  className: 'rounded-full p-6 mb-6',
-                  style: { backgroundColor: 'var(--muted)' }
+                  className: 'my-recipes-login-icon'
                 },
-                React.createElement(ChefHat, { size: 64, style: { color: 'var(--muted-foreground)' } })
+                React.createElement(ChefHat, { size: 64 })
               ),
               React.createElement(
                 'h2',
                 {
                   key: 'title',
-                  className: 'text-2xl font-semibold mb-2'
+                  className: 'my-recipes-login-title'
                 },
                 'Login Required'
               ),
@@ -84,8 +83,7 @@ const MyRecipesPage = ({ onAuthRequired }) => {
                 'p',
                 {
                   key: 'description',
-                  className: 'text-center mb-6 max-w-md leading-relaxed',
-                  style: { color: 'var(--muted-foreground)' }
+                  className: 'my-recipes-login-description'
                 },
                 'Please log in to view and manage your saved recipes'
               ),
@@ -110,10 +108,10 @@ const MyRecipesPage = ({ onAuthRequired }) => {
 
   return React.createElement(
     'div',
-    { className: 'min-h-screen flex flex-col' },
+    { className: 'min-h-screen bg-background' },
     React.createElement(
       'main',
-      { className: 'flex-1', style: { backgroundColor: 'var(--muted)', opacity: 0.3 } },
+      { className: 'flex-1' },
       React.createElement(
         'div',
         { className: 'container py-8 md:py-12' },
@@ -122,7 +120,7 @@ const MyRecipesPage = ({ onAuthRequired }) => {
             'div',
             {
               key: 'header',
-              className: 'flex items-center justify-between mb-8'
+              className: 'my-recipes-header'
             },
             [
               React.createElement(
@@ -133,7 +131,7 @@ const MyRecipesPage = ({ onAuthRequired }) => {
                     'h1',
                     {
                       key: 'main',
-                      className: 'text-3xl md:text-4xl font-bold mb-2'
+                      className: 'my-recipes-title'
                     },
                     'My Recipes'
                   ),
@@ -141,7 +139,7 @@ const MyRecipesPage = ({ onAuthRequired }) => {
                     'p',
                     {
                       key: 'subtitle',
-                      style: { color: 'var(--muted-foreground)' }
+                      className: 'my-recipes-subtitle'
                     },
                     isLoading ? 'Loading...' :
                     recipes.length === 0
@@ -155,7 +153,7 @@ const MyRecipesPage = ({ onAuthRequired }) => {
                 {
                   key: 'new-recipe',
                   onClick: () => window.location.hash = 'home',
-                  className: 'btn btn-primary gap-2'
+                  className: 'btn btn-primary gap-2 my-recipes-new-button'
                 },
                 [
                   React.createElement(Plus, { key: 'icon', size: 20 }),
@@ -168,7 +166,7 @@ const MyRecipesPage = ({ onAuthRequired }) => {
             'div',
             {
               key: 'loading',
-              className: 'flex items-center justify-center py-12'
+              className: 'my-recipes-loading'
             },
             React.createElement(
               'div',
@@ -178,14 +176,14 @@ const MyRecipesPage = ({ onAuthRequired }) => {
                   'div',
                   {
                     key: 'spinner',
-                    className: 'h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto mb-4'
+                    className: 'my-recipes-loading-spinner'
                   }
                 ),
                 React.createElement(
                   'p',
                   {
                     key: 'text',
-                    style: { color: 'var(--muted-foreground)' }
+                    className: 'my-recipes-loading-text'
                   },
                   'Loading your recipes...'
                 )
@@ -195,7 +193,7 @@ const MyRecipesPage = ({ onAuthRequired }) => {
             'div',
             {
               key: 'grid',
-              className: 'grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
+              className: 'my-recipes-grid'
             },
             recipes.map((recipe) =>
               React.createElement(SavedRecipeCard, {
@@ -210,23 +208,22 @@ const MyRecipesPage = ({ onAuthRequired }) => {
             'div',
             {
               key: 'empty',
-              className: 'flex flex-col items-center justify-center py-16 px-4'
+              className: 'my-recipes-empty'
             },
             [
               React.createElement(
                 'div',
                 {
                   key: 'icon',
-                  className: 'rounded-full p-6 mb-6',
-                  style: { backgroundColor: 'var(--muted)' }
+                  className: 'my-recipes-empty-icon'
                 },
-                React.createElement(ChefHat, { size: 64, style: { color: 'var(--muted-foreground)' } })
+                React.createElement(ChefHat, { size: 64 })
               ),
               React.createElement(
                 'h2',
                 {
                   key: 'title',
-                  className: 'text-2xl font-semibold mb-2'
+                  className: 'my-recipes-empty-title'
                 },
                 'No recipes yet'
               ),
@@ -234,8 +231,7 @@ const MyRecipesPage = ({ onAuthRequired }) => {
                 'p',
                 {
                   key: 'description',
-                  className: 'text-center mb-6 max-w-md leading-relaxed',
-                  style: { color: 'var(--muted-foreground)' }
+                  className: 'my-recipes-empty-description'
                 },
                 'Start by generating a recipe from your ingredients and save it after cooking'
               ),
@@ -244,7 +240,7 @@ const MyRecipesPage = ({ onAuthRequired }) => {
                 {
                   key: 'action',
                   onClick: () => window.location.hash = 'home',
-                  className: 'btn btn-primary btn-lg gap-2'
+                  className: 'btn btn-primary btn-lg gap-2 my-recipes-empty-button'
                 },
                 [
                   React.createElement(Plus, { key: 'icon', size: 20 }),

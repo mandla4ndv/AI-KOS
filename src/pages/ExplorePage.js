@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Clock, TrendingUp, ChefHat } from 'lucide-react';
+import { Search, Clock, Zap, Flame, Crown, Filter } from 'lucide-react';
 import '../styles/ExplorePage.css';
 
 const ExplorePage = () => {
@@ -8,9 +8,27 @@ const ExplorePage = () => {
   const [selectedDietary, setSelectedDietary] = useState(null);
 
   const popularCategories = [
-    { name: 'Quick & Easy', count: 156, icon: Clock, color: 'badge-primary' },
-    { name: 'Trending Now', count: 89, icon: TrendingUp, color: 'badge-secondary' },
-    { name: "Chef's Special", count: 42, icon: ChefHat, color: 'badge-primary' },
+    { 
+      name: 'Quick & Easy', 
+      count: 156, 
+      icon: Zap, 
+      color: 'category-primary',
+      description: 'Under 30 minutes'
+    },
+    { 
+      name: 'Trending Now', 
+      count: 89, 
+      icon: Flame, 
+      color: 'category-secondary',
+      description: 'Most popular'
+    },
+    { 
+      name: "Chef's Special", 
+      count: 42, 
+      icon: Crown, 
+      color: 'category-accent',
+      description: 'AI masterpieces'
+    },
   ];
 
   const cuisineTypes = [
@@ -76,81 +94,90 @@ const ExplorePage = () => {
 
   return React.createElement(
     'div',
-    { className: 'min-h-screen flex flex-col' },
+    { className: 'explore-page' },
     React.createElement(
       'main',
-      { className: 'flex-1' },
+      { className: 'explore-main' },
       React.createElement(
         'div',
-        { className: 'container py-12' },
+        { className: 'explore-container' },
         [
+          // Hero Section with Professional Search
           React.createElement(
-            'div',
+            'section',
             {
               key: 'hero',
-              className: 'max-w-4xl mx-auto text-center mb-12 animate-fade-in'
+              className: 'explore-hero'
             },
             [
               React.createElement(
                 'h1',
                 {
                   key: 'title',
-                  className: 'text-4xl md:text-5xl font-bold mb-4 text-balance'
+                  className: 'explore-hero-title'
                 },
-                'Explore ',
-                React.createElement(
-                  'span',
-                  { style: { color: 'var(--primary)' } },
-                  'Delicious Recipes'
-                )
+                'Discover Thousands of AI-Generated Recipes'
               ),
               React.createElement(
                 'p',
                 {
                   key: 'subtitle',
-                  className: 'text-lg mb-8 leading-relaxed',
-                  style: { color: 'var(--muted-foreground)' }
+                  className: 'explore-hero-subtitle'
                 },
-                'Discover thousands of AI-generated recipes from cuisines around the world'
+                'Explore culinary masterpieces from global cuisines and dietary preferences'
               ),
               React.createElement(
                 'div',
                 {
                   key: 'search',
-                  className: 'relative max-w-2xl mx-auto'
+                  className: 'professional-search-container'
                 },
                 [
                   React.createElement(Search, {
                     key: 'icon',
-                    className: 'absolute left-4 top-1/2 transform -translate-y-1/2',
-                    size: 20,
-                    style: { color: 'var(--muted-foreground)' }
+                    className: 'professional-search-icon',
+                    size: 24
                   }),
                   React.createElement('input', {
                     key: 'input',
                     type: 'text',
-                    placeholder: 'Search for recipes, ingredients, or cuisines...',
+                    placeholder: 'Search recipes, ingredients, or cuisines...',
                     value: searchQuery,
                     onChange: (e) => setSearchQuery(e.target.value),
-                    className: 'input pl-12',
-                    style: { height: '56px', fontSize: '18px' }
-                  })
+                    className: 'professional-search-input'
+                  }),
+                  React.createElement(
+                    'button',
+                    {
+                      key: 'filter',
+                      className: 'search-filter-button'
+                    },
+                    [
+                      React.createElement(Filter, { 
+                        key: 'filter-icon',
+                        size: 20 
+                      }),
+                      ' Filters'
+                    ]
+                  )
                 ]
               )
             ]
           ),
+
+          // Enhanced Categories Section
           React.createElement(
-            'div',
+            'section',
             {
               key: 'categories',
-              className: 'mb-12 animate-slide-up'
+              className: 'enhanced-categories-section'
             },
             [
               React.createElement(
                 'h2',
                 {
                   key: 'title',
-                  className: 'text-2xl font-bold mb-6'
+                  className: 'section-title'
                 },
                 'Popular Categories'
               ),
@@ -158,48 +185,69 @@ const ExplorePage = () => {
                 'div',
                 {
                   key: 'grid',
-                  className: 'grid md:grid-cols-3 gap-6'
+                  className: 'enhanced-categories-grid'
                 },
-                popularCategories.map((category, index) =>
-                  React.createElement(
+                popularCategories.map((category, index) => {
+                  const IconComponent = category.icon;
+                  return React.createElement(
                     'div',
                     {
                       key: category.name,
-                      className: 'p-6 rounded-xl border glass-card hover-lift cursor-pointer animate-slide-up',
-                      style: { animationDelay: `${index * 0.1}s` }
+                      className: `enhanced-category-card ${category.color}`
                     },
                     [
                       React.createElement(
                         'div',
                         {
-                          key: 'icon',
-                          className: `inline-flex items-center justify-center w-12 h-12 rounded-xl mb-4 ${category.color}`
+                          key: 'icon-container',
+                          className: 'category-icon-container'
                         },
-                        React.createElement(category.icon, { size: 24 })
+                        React.createElement(IconComponent, { 
+                          size: 32,
+                          className: 'category-main-icon'
+                        })
                       ),
                       React.createElement(
-                        'h3',
+                        'div',
                         {
-                          key: 'name',
-                          className: 'text-xl font-semibold mb-2'
+                          key: 'content',
+                          className: 'category-content-wrapper'
                         },
-                        category.name
-                      ),
-                      React.createElement(
-                        'p',
-                        {
-                          key: 'count',
-                          className: 'text-sm',
-                          style: { color: 'var(--muted-foreground)' }
-                        },
-                        `${category.count} recipes`
+                        [
+                          React.createElement(
+                            'h3',
+                            {
+                              key: 'name',
+                              className: 'category-main-name'
+                            },
+                            category.name
+                          ),
+                          React.createElement(
+                            'p',
+                            {
+                              key: 'description',
+                              className: 'category-description-text'
+                            },
+                            category.description
+                          ),
+                          React.createElement(
+                            'div',
+                            {
+                              key: 'count',
+                              className: 'category-recipe-count'
+                            },
+                            `${category.count} recipes`
+                          )
+                        ]
                       )
                     ]
-                  )
-                )
+                  );
+                })
               )
             ]
           ),
+
+          // Filters Section (unchanged)
           React.createElement(
             'div',
             {
@@ -274,6 +322,8 @@ const ExplorePage = () => {
               )
             ]
           ),
+
+          // Featured Recipes (completely unchanged)
           React.createElement(
             'div',
             {
