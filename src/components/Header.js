@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Menu, X, ChefHat, User } from 'lucide-react';
 import AuthModal from './AuthModal';
+import '../styles/Header.css';
 
 const Header = ({ currentPage, onNavigate }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -28,74 +29,55 @@ const Header = ({ currentPage, onNavigate }) => {
         'header',
         {
           key: 'header',
-          className: 'sticky top-0 z-50 w-full border-b glass-header'
+          className: 'header'
         },
         React.createElement(
           'div',
-          { className: 'container flex h-16 items-center justify-between' },
+          { className: 'header-container' },
           [
             React.createElement(
               'button',
               {
                 key: 'logo',
                 onClick: () => onNavigate('home'),
-                className: 'flex items-center gap-2 font-semibold text-xl transition-transform hover:scale-105',
-                style: { background: 'none', border: 'none', cursor: 'pointer' }
+                className: 'header-logo'
               },
               [
-                React.createElement(ChefHat, { key: 'icon', size: 28, color: 'var(--primary)' }),
+                React.createElement(ChefHat, { key: 'icon', size: 28 }),
                 React.createElement(
                   'span',
-                  { key: 'text', style: { color: 'var(--primary)' } },
+                  { key: 'text' },
                   'AI-KOS'
                 )
               ]
             ),
             React.createElement(
               'nav',
-              { key: 'desktop-nav', className: 'hidden md:flex items-center gap-6' },
+              { key: 'desktop-nav', className: 'header-nav' },
               navItems.map(item =>
                 React.createElement(
                   'button',
                   {
                     key: item.key,
                     onClick: () => onNavigate(item.key),
-                    className: 'text-sm font-medium transition-colors',
-                    style: {
-                      background: 'none',
-                      border: 'none',
-                      cursor: 'pointer',
-                      color: currentPage === item.key ? 'var(--primary)' : 'var(--foreground)'
-                    }
+                    className: `nav-button ${currentPage === item.key ? 'active' : ''}`
                   },
                   item.label
-                )
-              ).concat(
-                !user && React.createElement(
-                  'button',
-                  {
-                    key: 'login',
-                    onClick: () => openAuthModal('login'),
-                    className: 'btn-ghost btn-sm',
-                    style: { background: 'none', border: 'none' }
-                  },
-                  'Login'
                 )
               )
             ),
             React.createElement(
               'div',
-              { key: 'user-section', className: 'hidden md:block' },
+              { key: 'user-section', className: 'header-user-section' },
               user ? React.createElement(
                 'div',
-                { className: 'flex items-center gap-2' },
+                { className: 'user-container' },
                 [
                   React.createElement(
                     'div',
                     {
                       key: 'avatar',
-                      className: 'w-10 h-10 rounded-full flex items-center justify-center',
-                      style: { backgroundColor: 'var(--primary)', color: 'var(--primary-foreground)' }
+                      className: 'user-avatar'
                     },
                     user.name.charAt(0).toUpperCase()
                   ),
@@ -104,7 +86,7 @@ const Header = ({ currentPage, onNavigate }) => {
                     {
                       key: 'logout',
                       onClick: () => setUser(null),
-                      className: 'btn-ghost btn-sm'
+                      className: 'user-logout-button'
                     },
                     'Logout'
                   )
@@ -113,8 +95,7 @@ const Header = ({ currentPage, onNavigate }) => {
                 'button',
                 {
                   onClick: () => openAuthModal('login'),
-                  className: 'btn-ghost',
-                  style: { background: 'none', border: 'none' }
+                  className: 'user-login-button'
                 },
                 React.createElement(User, { size: 20 })
               )
@@ -124,8 +105,7 @@ const Header = ({ currentPage, onNavigate }) => {
               {
                 key: 'mobile-menu',
                 onClick: () => setMobileMenuOpen(!mobileMenuOpen),
-                className: 'btn-ghost md:hidden',
-                style: { background: 'none', border: 'none' }
+                className: 'mobile-menu-button'
               },
               mobileMenuOpen ? React.createElement(X, { size: 20 }) : React.createElement(Menu, { size: 20 })
             )
@@ -136,11 +116,11 @@ const Header = ({ currentPage, onNavigate }) => {
         'div',
         {
           key: 'mobile-nav',
-          className: 'md:hidden border-t glass-card animate-slide-up'
+          className: 'mobile-nav'
         },
         React.createElement(
-          'nav',
-          { className: 'container flex flex-col gap-4 py-4' },
+          'div',
+          { className: 'mobile-nav-container' },
           navItems.map(item =>
             React.createElement(
               'button',
@@ -150,14 +130,7 @@ const Header = ({ currentPage, onNavigate }) => {
                   onNavigate(item.key);
                   setMobileMenuOpen(false);
                 },
-                className: 'text-sm font-medium transition-colors',
-                style: {
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                  color: currentPage === item.key ? 'var(--primary)' : 'var(--foreground)'
-                }
+                className: `mobile-nav-button ${currentPage === item.key ? 'active' : ''}`
               },
               item.label
             )
@@ -170,7 +143,7 @@ const Header = ({ currentPage, onNavigate }) => {
                   openAuthModal('login');
                   setMobileMenuOpen(false);
                 },
-                className: 'btn-primary touch-target w-full'
+                className: 'mobile-login-button'
               },
               'Login'
             ) : React.createElement(
@@ -181,7 +154,7 @@ const Header = ({ currentPage, onNavigate }) => {
                   setUser(null);
                   setMobileMenuOpen(false);
                 },
-                className: 'btn-outline touch-target w-full'
+                className: 'mobile-logout-button'
               },
               'Logout'
             )

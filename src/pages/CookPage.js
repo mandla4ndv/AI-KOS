@@ -3,6 +3,7 @@ import { useToast } from '../contexts/ToastContext';
 import CookingMode from '../components/CookingMode';
 import RatingDialog from '../components/RatingDialog';
 import { saveRecipe } from '../services/storageService';
+import '../styles/CookPage.css';
 
 const CookPage = () => {
   const [recipe, setRecipe] = useState(null);
@@ -14,28 +15,52 @@ const CookPage = () => {
     if (storedRecipe) {
       setRecipe(JSON.parse(storedRecipe));
     } else {
-      window.location.href = '/#home';
+      // Try to get recipe from URL hash
+      const hash = window.location.hash;
+      if (hash.startsWith('#recipe-')) {
+        const recipeId = hash.replace('#recipe-', '');
+        const savedRecipes = JSON.parse(localStorage.getItem('recipeai_saved_recipes') || '[]');
+        const foundRecipe = savedRecipes.find(r => r.id === recipeId);
+        if (foundRecipe) {
+          setRecipe(foundRecipe);
+          sessionStorage.setItem('currentRecipe', JSON.stringify(foundRecipe));
+        } else {
+          window.location.hash = 'home';
+          addToast({
+            title: 'Recipe not found',
+            description: 'Please generate a recipe first',
+            variant: 'destructive',
+          });
+        }
+      } else {
+        window.location.hash = 'home';
+        addToast({
+          title: 'No recipe selected',
+          description: 'Please generate a recipe first',
+          variant: 'destructive',
+        });
+      }
     }
-  }, []);
+  }, [addToast]);
 
   const handleComplete = () => {
     setShowRatingDialog(true);
   };
 
-  const handleRate = (rating) => {
+  const handleRate = (rating, comment = '') => {
     if (recipe) {
       saveRecipe(recipe, rating);
       addToast({
         title: 'Recipe saved!',
-        description: 'Your recipe has been added to My Recipes',
+        description: comment ? 'Your recipe and rating have been saved' : 'Your recipe has been added to My Recipes',
       });
-      window.location.href = '/#my-recipes';
+      window.location.hash = 'my-recipes';
     }
   };
 
   const handleExit = () => {
     if (confirm('Are you sure you want to exit cooking mode?')) {
-      window.location.href = '/#home';
+      window.location.hash = 'home';
     }
   };
 
@@ -82,6 +107,7 @@ const CookPage = () => {
         open: showRatingDialog,
         onOpenChange: setShowRatingDialog,
         recipeTitle: recipe.title,
+        currentRating: 0,
         onRate: handleRate
       })
     ]

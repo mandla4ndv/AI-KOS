@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { X, Upload, ImageIcon, Edit2 } from 'lucide-react';
 import { useToast } from '../contexts/ToastContext';
 import { detectIngredientsFromImage } from '../services/recipeService';
+import '../styles/IngredientInput.css';
 
 const IngredientInput = ({ ingredients, onIngredientsChange }) => {
   const [inputValue, setInputValue] = useState('');

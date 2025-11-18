@@ -1,17 +1,26 @@
 import React, { useState } from 'react';
-import { Star } from 'lucide-react';
+import { Star, X } from 'lucide-react';
+import '../styles/RatingDialog.css';
 
-const RatingDialog = ({ open, onOpenChange, recipeTitle, onRate }) => {
-  const [rating, setRating] = useState(0);
+const RatingDialog = ({ open, onOpenChange, recipeTitle, currentRating, onRate }) => {
+  const [rating, setRating] = useState(currentRating || 0);
   const [hoverRating, setHoverRating] = useState(0);
+  const [comment, setComment] = useState('');
 
   const handleSubmit = () => {
     if (rating > 0) {
-      onRate(rating);
+      onRate(rating, comment.trim());
       onOpenChange(false);
       setRating(0);
       setHoverRating(0);
+      setComment('');
     }
+  };
+
+  const handleCancel = () => {
+    onOpenChange(false);
+    setRating(currentRating || 0);
+    setComment('');
   };
 
   if (!open) return null;
@@ -30,7 +39,7 @@ const RatingDialog = ({ open, onOpenChange, recipeTitle, onRate }) => {
       [
         React.createElement(
           'div',
-          { key: 'header', className: 'mb-6' },
+          { key: 'header', className: 'flex items-center justify-between mb-6' },
           [
             React.createElement(
               'h2',
@@ -38,21 +47,31 @@ const RatingDialog = ({ open, onOpenChange, recipeTitle, onRate }) => {
               'Rate this recipe'
             ),
             React.createElement(
-              'p',
-              { 
-                key: 'desc', 
-                className: 'mt-2',
-                style: { color: 'var(--muted-foreground)' }
+              'button',
+              {
+                key: 'close',
+                onClick: handleCancel,
+                className: 'btn btn-ghost btn-sm',
+                style: { background: 'none', border: 'none' }
               },
-              `How did ${recipeTitle} turn out?`
+              React.createElement(X, { size: 20 })
             )
           ]
+        ),
+        React.createElement(
+          'p',
+          { 
+            key: 'desc', 
+            className: 'mb-6',
+            style: { color: 'var(--muted-foreground)' }
+          },
+          `How did you like "${recipeTitle}"?`
         ),
         React.createElement(
           'div',
           {
             key: 'stars',
-            className: 'flex items-center justify-center gap-2 py-6'
+            className: 'flex items-center justify-center gap-2 py-4'
           },
           [1, 2, 3, 4, 5].map((star) =>
             React.createElement(
@@ -76,28 +95,55 @@ const RatingDialog = ({ open, onOpenChange, recipeTitle, onRate }) => {
         React.createElement(
           'div',
           {
+            key: 'comment',
+            className: 'mt-6'
+          },
+          [
+            React.createElement(
+              'label',
+              {
+                key: 'label',
+                htmlFor: 'comment',
+                className: 'text-sm font-medium mb-2 block'
+              },
+              'Add a comment (optional)'
+            ),
+            React.createElement('textarea', {
+              key: 'textarea',
+              id: 'comment',
+              placeholder: 'Share your thoughts about this recipe...',
+              value: comment,
+              onChange: (e) => setComment(e.target.value),
+              className: 'input min-h-24 resize-vertical',
+              rows: 3
+            })
+          ]
+        ),
+        React.createElement(
+          'div',
+          {
             key: 'actions',
-            className: 'flex gap-3'
+            className: 'flex gap-3 mt-6'
           },
           [
             React.createElement(
               'button',
               {
-                key: 'skip',
-                onClick: () => onOpenChange(false),
+                key: 'cancel',
+                onClick: handleCancel,
                 className: 'btn btn-outline flex-1'
               },
-              'Skip'
+              'Cancel'
             ),
             React.createElement(
               'button',
               {
-                key: 'save',
+                key: 'submit',
                 onClick: handleSubmit,
                 disabled: rating === 0,
                 className: 'btn btn-primary flex-1'
               },
-              'Save Rating'
+              'Submit Rating'
             )
           ]
         )

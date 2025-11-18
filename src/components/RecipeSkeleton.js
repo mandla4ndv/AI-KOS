@@ -1,4 +1,5 @@
 import React from 'react';
+import '../styles/RecipeSkeleton.css';
 
 const RecipeSkeleton = () => {
   const SkeletonLine = ({ width, height }) => {

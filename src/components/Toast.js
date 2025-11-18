@@ -1,5 +1,6 @@
 import React from 'react';
 import { X } from 'lucide-react';
+import '../styles/Toast.css';
 
 const Toast = ({ toasts, onRemove }) => {
   return React.createElement(

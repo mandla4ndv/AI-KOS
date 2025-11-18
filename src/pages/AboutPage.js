@@ -1,5 +1,6 @@
 import React from 'react';
 import { ChefHat, Sparkles, Heart, Users } from 'lucide-react';
+import '../styles/AboutPage.css';
 
 const AboutPage = () => {
   return React.createElement(

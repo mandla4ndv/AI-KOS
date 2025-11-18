@@ -5,7 +5,7 @@ import RecipeCard from '../components/RecipeCard';
 import RecipeSkeleton from '../components/RecipeSkeleton';
 import { useToast } from '../contexts/ToastContext';
 import { generateRecipe } from '../services/recipeService';
-
+import '../styles/HomePage.css';
 const HomePage = () => {
   const [ingredients, setIngredients] = useState([]);
   const [recipe, setRecipe] = useState(null);
@@ -49,7 +49,7 @@ const HomePage = () => {
   const handleStartCooking = () => {
     if (recipe) {
       sessionStorage.setItem('currentRecipe', JSON.stringify(recipe));
-      window.location.href = '/#cook';
+      window.location.hash = 'cook';
     }
   };
 
@@ -152,7 +152,7 @@ const HomePage = () => {
                             className: 'text-sm leading-relaxed',
                             style: { color: 'var(--muted-foreground)' }
                           },
-                          'Add ingredients below or upload a photo'
+                          'Add ingredients below or upload a photo to get started'
                         )
                       ]
                     ),

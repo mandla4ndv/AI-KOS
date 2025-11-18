@@ -112,35 +112,19 @@ class GeminiClient {
 
 const geminiClient = new GeminiClient();
 
-export async function generateRecipeImage(recipeTitle) {
-  return `/placeholder.svg?height=600&width=800&text=${encodeURIComponent(recipeTitle)}`;
-}
-
-export async function generateStepImage(recipeTitle, stepNumber, description) {
-  return `/placeholder.svg?height=400&width=600&text=${encodeURIComponent(`Step ${stepNumber}`)}`;
-}
-
 export async function generateRecipe(ingredients) {
   try {
     console.log("Generating recipe with ingredients:", ingredients);
     
     const recipe = await geminiClient.generateRecipe(ingredients);
     
-    const heroImage = await generateRecipeImage(recipe.title);
-    
-    const instructionsWithImages = await Promise.all(
-      recipe.instructions.map(async (instruction, index) => ({
-        ...instruction,
-        image: instruction.duration
-          ? await generateStepImage(recipe.title, instruction.step, instruction.description)
-          : undefined,
-      }))
-    );
-
+    // No image generation - return recipe without images
     const finalRecipe = {
       ...recipe,
-      image: heroImage,
-      instructions: instructionsWithImages,
+      instructions: recipe.instructions.map(instruction => ({
+        ...instruction,
+        // No image property added
+      })),
     };
 
     console.log("Generated recipe:", finalRecipe);

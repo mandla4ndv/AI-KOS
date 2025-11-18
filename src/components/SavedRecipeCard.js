@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Clock, Trash2, ChefHat, Star } from 'lucide-react';
 import { deleteRecipe, updateRecipeRating } from '../services/storageService';
 import { useToast } from '../contexts/ToastContext';
+import '../styles/SavedRecipeCard.css';
 
 const SavedRecipeCard = ({ recipe, onDelete }) => {
   const [isDeleting, setIsDeleting] = useState(false);

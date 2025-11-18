@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ChefHat, Plus } from 'lucide-react';
 import SavedRecipeCard from '../components/SavedRecipeCard';
 import { getSavedRecipes } from '../services/storageService';
+import '../styles/MyRecipesPage.css';
 
 const MyRecipesPage = () => {
   const [recipes, setRecipes] = useState([]);

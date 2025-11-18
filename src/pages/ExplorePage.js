@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Search, Clock, TrendingUp, ChefHat } from 'lucide-react';
+import '../styles/ExplorePage.css';
 
 const ExplorePage = () => {
   const [searchQuery, setSearchQuery] = useState('');

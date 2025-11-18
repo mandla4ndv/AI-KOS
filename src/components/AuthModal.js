@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useToast } from '../contexts/ToastContext';
+import '../styles/AuthModal.css';
 
 const AuthModal = ({ open, onOpenChange, mode, onModeChange, onSuccess }) => {
   const [email, setEmail] = useState('');

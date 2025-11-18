@@ -1,0 +1,181 @@
+.cooking-mode {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--background);
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+.cooking-header {
+  border-bottom: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(20px);
+}
+
+.cooking-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 4rem;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.cooking-title {
+  font-weight: 600;
+  font-size: 1.125rem;
+  text-wrap: pretty;
+}
+
+.cooking-controls {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.cooking-progress {
+  padding-bottom: 1rem;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem 1rem;
+}
+
+.progress-labels {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.875rem;
+  color: var(--muted-foreground);
+  margin-bottom: 0.5rem;
+}
+
+.cooking-content {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.cooking-content-inner {
+  padding: 2rem 0;
+  max-width: 48rem;
+  margin: 0 auto;
+}
+
+@media (min-width: 768px) {
+  .cooking-content-inner {
+    padding: 3rem 0;
+  }
+}
+
+.timer-card {
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+  border-radius: 12px;
+  padding: 1.5rem;
+  text-align: center;
+  margin-bottom: 2rem;
+  animation: scaleIn 0.3s ease-out;
+}
+
+.timer-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+.timer-time {
+  font-size: 3rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+.step-card {
+  border-radius: 12px;
+  padding: 2rem;
+  animation: slideUp 0.4s ease-out;
+}
+
+@media (min-width: 768px) {
+  .step-card {
+    padding: 3rem;
+  }
+}
+
+.step-number {
+  width: 4rem;
+  height: 4rem;
+  border-radius: 9999px;
+  margin: 0 auto 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 700;
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+}
+
+.step-description {
+  font-size: 1.5rem;
+  font-weight: 500;
+  text-align: center;
+  line-height: 1.625;
+  text-wrap: balance;
+}
+
+@media (min-width: 768px) {
+  .step-description {
+    font-size: 1.875rem;
+  }
+}
+
+.step-duration {
+  text-align: center;
+  margin-top: 1.5rem;
+  color: var(--muted-foreground);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.voice-hint {
+  text-align: center;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  margin-top: 1.5rem;
+  animation: pulse 2s infinite;
+}
+
+.cooking-footer {
+  border-top: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(20px);
+}
+
+.cooking-footer-inner {
+  padding: 1rem 0;
+  max-width: 48rem;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.cooking-nav-button {
+  min-height: 44px;
+  min-width: 44px;
+  gap: 0.5rem;
+}
+
+@media (min-width: 768px) {
+  .cooking-nav-button .button-text {
+    display: inline;
+  }
+}

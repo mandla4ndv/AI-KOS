@@ -1,10 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ChevronLeft, ChevronRight, Play, Pause, Volume2, VolumeX, Check, X, Mic } from 'lucide-react';
+import ConfirmationModal from './ConfirmationModal';
+import '../styles/CookingMode.css';
 
 class SpeechService {
   constructor() {
     this.synth = typeof window !== 'undefined' && 'speechSynthesis' in window ? window.speechSynthesis : null;
     this.utterance = null;
+    this.isSpeaking = false;
   }
 
   speak(text, onEnd) {
@@ -13,22 +16,30 @@ class SpeechService {
       return;
     }
 
-    this.synth.cancel();
+    this.cancel(); // Cancel any ongoing speech
 
     this.utterance = new SpeechSynthesisUtterance(text);
     this.utterance.rate = 0.9;
     this.utterance.pitch = 1;
     this.utterance.volume = 1;
+    this.isSpeaking = true;
 
     if (onEnd) {
-      this.utterance.onend = onEnd;
+      this.utterance.onend = () => {
+        this.isSpeaking = false;
+        onEnd();
+      };
+    } else {
+      this.utterance.onend = () => {
+        this.isSpeaking = false;
+      };
     }
 
     this.synth.speak(this.utterance);
   }
 
   pause() {
-    if (this.synth) {
+    if (this.synth && this.isSpeaking) {
       this.synth.pause();
     }
   }
@@ -42,6 +53,7 @@ class SpeechService {
   cancel() {
     if (this.synth) {
       this.synth.cancel();
+      this.isSpeaking = false;
     }
   }
 }
@@ -53,6 +65,7 @@ const CookingMode = ({ recipe, onComplete, onExit }) => {
   const [timeRemaining, setTimeRemaining] = useState(null);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const [isListening, setIsListening] = useState(false);
+  const [showExitModal, setShowExitModal] = useState(false);
   const speechServiceRef = useRef(null);
   const timerRef = useRef(null);
   const wakeLockRef = useRef(null);
@@ -82,38 +95,36 @@ const CookingMode = ({ recipe, onComplete, onExit }) => {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         recognitionRef.current = new SpeechRecognition();
         recognitionRef.current.continuous = true;
-        recognitionRef.current.interimResults = false;
+        recognitionRef.current.interimResults = true;
+        recognitionRef.current.lang = 'en-US';
 
         recognitionRef.current.onresult = (event) => {
-          const transcript = event.results[event.results.length - 1][0].transcript.toLowerCase();
-          console.log('Voice command:', transcript);
+          const transcript = event.results[event.results.length - 1][0].transcript.toLowerCase().trim();
+          console.log('Voice command detected:', transcript);
 
-          if (transcript.includes('next') || transcript.includes('step')) {
-            if ('vibrate' in navigator) {
-              navigator.vibrate(100);
-            }
-            goToNextStep();
-          } else if (transcript.includes('previous') || transcript.includes('back')) {
-            if ('vibrate' in navigator) {
-              navigator.vibrate(100);
-            }
-            goToPreviousStep();
-          } else if (transcript.includes('pause')) {
-            if ('vibrate' in navigator) {
-              navigator.vibrate(100);
-            }
-            setIsPaused(true);
-          } else if (transcript.includes('resume') || transcript.includes('play')) {
-            if ('vibrate' in navigator) {
-              navigator.vibrate(100);
-            }
-            setIsPaused(false);
-          }
+          // Process voice commands immediately, interrupting speech if needed
+          processVoiceCommand(transcript);
         };
 
         recognitionRef.current.onerror = (event) => {
           console.log('Speech recognition error:', event.error);
+          if (event.error === 'not-allowed') {
+            console.warn('Microphone access not allowed');
+          }
         };
+
+        recognitionRef.current.onend = () => {
+          if (isListening) {
+            // Restart recognition if it ended unexpectedly
+            try {
+              recognitionRef.current.start();
+            } catch (error) {
+              console.log('Could not restart speech recognition:', error);
+            }
+          }
+        };
+      } else {
+        console.warn('Speech recognition not supported in this browser');
       }
     };
 
@@ -133,15 +144,59 @@ const CookingMode = ({ recipe, onComplete, onExit }) => {
     };
   }, []);
 
+  const processVoiceCommand = (transcript) => {
+    // Cancel current speech when a command is detected
+    if (speechServiceRef.current.isSpeaking) {
+      speechServiceRef.current.cancel();
+    }
+
+    // Enhanced voice command recognition with multiple variations
+    if (transcript.includes('next') || transcript.includes('next step') || transcript.includes('proceed') || transcript.includes('continue')) {
+      handleCommandAction('Next step command detected', goToNextStep);
+    } else if (transcript.includes('previous') || transcript.includes('back') || transcript.includes('go back') || transcript.includes('last step')) {
+      handleCommandAction('Previous step command detected', goToPreviousStep);
+    } else if (transcript.includes('pause') || transcript.includes('stop') || transcript.includes('hold')) {
+      handleCommandAction('Pause command detected', () => setIsPaused(true));
+    } else if (transcript.includes('resume') || transcript.includes('play') || transcript.includes('start') || transcript.includes('continue')) {
+      handleCommandAction('Resume command detected', () => setIsPaused(false));
+    } else if (transcript.includes('mute') || transcript.includes('silence') || transcript.includes('quiet')) {
+      handleCommandAction('Mute command detected', () => setIsMuted(true));
+    } else if (transcript.includes('unmute') || transcript.includes('sound') || transcript.includes('volume')) {
+      handleCommandAction('Unmute command detected', () => setIsMuted(false));
+    } else if (transcript.includes('complete') || transcript.includes('finish') || transcript.includes('done') || transcript.includes('end')) {
+      handleCommandAction('Complete command detected', handleComplete);
+    } else if (transcript.includes('exit') || transcript.includes('quit') || transcript.includes('close') || transcript.includes('leave')) {
+      handleCommandAction('Exit command detected', () => setShowExitModal(true));
+    } else if (transcript.includes('repeat') || transcript.includes('again') || transcript.includes('say again')) {
+      handleCommandAction('Repeat command detected', speakCurrentStep);
+    }
+  };
+
+  const handleCommandAction = (logMessage, action) => {
+    console.log(logMessage);
+    if ('vibrate' in navigator) {
+      navigator.vibrate(50);
+    }
+    action();
+  };
+
   const toggleVoiceRecognition = () => {
-    if (!recognitionRef.current) return;
+    if (!recognitionRef.current) {
+      console.warn('Speech recognition not available');
+      return;
+    }
 
     if (isListening) {
       recognitionRef.current.stop();
       setIsListening(false);
     } else {
-      recognitionRef.current.start();
-      setIsListening(true);
+      try {
+        recognitionRef.current.start();
+        setIsListening(true);
+        console.log('Voice recognition started');
+      } catch (error) {
+        console.error('Failed to start voice recognition:', error);
+      }
     }
   };
 
@@ -242,6 +297,16 @@ const CookingMode = ({ recipe, onComplete, onExit }) => {
     onComplete();
   };
 
+  const handleExit = () => {
+    speechServiceRef.current?.cancel();
+    setShowExitModal(true);
+  };
+
+  const confirmExit = () => {
+    setShowExitModal(false);
+    onExit();
+  };
+
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -273,7 +338,7 @@ const CookingMode = ({ recipe, onComplete, onExit }) => {
                 'button',
                 {
                   key: 'exit',
-                  onClick: onExit,
+                  onClick: handleExit,
                   className: 'btn btn-ghost',
                   style: { background: 'none', border: 'none' }
                 },
@@ -299,11 +364,10 @@ const CookingMode = ({ recipe, onComplete, onExit }) => {
                     {
                       key: 'voice',
                       onClick: toggleVoiceRecognition,
-                      className: 'btn btn-ghost',
+                      className: `btn btn-ghost ${isListening ? 'text-primary' : ''}`,
                       style: { 
                         background: 'none', 
-                        border: 'none',
-                        color: isListening ? 'var(--primary)' : 'inherit'
+                        border: 'none'
                       }
                     },
                     React.createElement(Mic, { 
@@ -417,22 +481,6 @@ const CookingMode = ({ recipe, onComplete, onExit }) => {
                   )
                 ]
               ),
-              currentInstruction.image && React.createElement(
-                'div',
-                {
-                  key: 'image',
-                  className: 'card mb-8 overflow-hidden animate-scale-in'
-                },
-                React.createElement(
-                  'div',
-                  { className: 'relative aspect-video gradient-overlay' },
-                  React.createElement('img', {
-                    src: currentInstruction.image || '/placeholder.svg',
-                    alt: `Step ${currentStep + 1} visual guide`,
-                    className: 'w-full h-full object-cover'
-                  })
-                )
-              ),
               React.createElement(
                 'div',
                 {
@@ -461,24 +509,45 @@ const CookingMode = ({ recipe, onComplete, onExit }) => {
                     currentInstruction.description
                   ),
                   currentInstruction.duration && !isTimerRunning && React.createElement(
-                    'p',
+                    'div',
                     {
                       key: 'duration',
-                      className: 'text-center mt-6',
+                      className: 'text-center mt-6 flex items-center justify-center gap-2',
                       style: { color: 'var(--muted-foreground)' }
                     },
-                    `Estimated time: ${currentInstruction.duration} minutes`
+                    [
+                      React.createElement(Clock, { key: 'icon', size: 20 }),
+                      `Estimated time: ${currentInstruction.duration} minutes`
+                    ]
                   )
                 ]
               ),
               isListening && React.createElement(
-                'p',
+                'div',
                 {
                   key: 'voice-hint',
-                  className: 'text-center text-sm mt-4 animate-pulse',
-                  style: { color: 'var(--muted-foreground)' }
+                  className: 'text-center mt-6 p-4 rounded-lg glass-card animate-pulse'
                 },
-                'Listening for voice commands: "Next step", "Previous", "Pause", "Resume"'
+                [
+                  React.createElement(
+                    'p',
+                    {
+                      key: 'title',
+                      className: 'font-semibold mb-2',
+                      style: { color: 'var(--primary)' }
+                    },
+                    '🎤 Voice Control Active'
+                  ),
+                  React.createElement(
+                    'p',
+                    {
+                      key: 'commands',
+                      className: 'text-sm',
+                      style: { color: 'var(--muted-foreground)' }
+                    },
+                    'Try saying: "Next", "Previous", "Pause", "Resume", "Mute", "Complete", "Exit"'
+                  )
+                ]
               )
             ]
           )
@@ -570,7 +639,18 @@ const CookingMode = ({ recipe, onComplete, onExit }) => {
             ]
           )
         )
-      )
+      ),
+      React.createElement(ConfirmationModal, {
+        key: 'exit-modal',
+        open: showExitModal,
+        onOpenChange: setShowExitModal,
+        title: 'Exit Cooking Mode',
+        message: 'Are you sure you want to exit cooking mode? Your progress will be saved.',
+        confirmText: 'Exit',
+        cancelText: 'Cancel',
+        onConfirm: confirmExit,
+        variant: 'destructive'
+      })
     ]
   );
 };
