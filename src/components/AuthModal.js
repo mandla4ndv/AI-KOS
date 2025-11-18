@@ -192,8 +192,9 @@ const AuthModal = ({ open, onOpenChange }) => {
                       key: 'input',
                       id: 'email',
                       type: 'email',
-                      placeholder: 'Enter your email',
+                      placeholder: '        Enter your email',
                       value: email,
+
                       onChange: (e) => setEmail(e.target.value),
                       className: 'input pl-10 w-full',
                       required: true
@@ -232,7 +233,7 @@ const AuthModal = ({ open, onOpenChange }) => {
                       key: 'input',
                       id: 'password',
                       type: 'password',
-                      placeholder: 'Enter your password',
+                      placeholder: '        Enter your password',
                       value: password,
                       onChange: (e) => setPassword(e.target.value),
                       className: 'input pl-10 w-full',
