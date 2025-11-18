@@ -317,11 +317,7 @@
   font-weight: 700;
   text-align: center;
   margin-bottom: 2rem;
-  color: var(--foreground);
-  background: linear-gradient(135deg, var(--foreground) 0%, #6366f1 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: #000;
 }
 
 .about-story-text {

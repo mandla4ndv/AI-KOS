@@ -123,10 +123,10 @@ const AboutPage = () => {
                       [
                         React.createElement(
                           'div',
-                          {
+                          /*{
                             key: 'icon',
                             className: 'about-mission-icon'
-                          },
+                          },*/
                           React.createElement(Building, { 
                             size: 32,
                             className: 'urban-icon'
@@ -263,10 +263,10 @@ const AboutPage = () => {
                       [
                         React.createElement(
                           'div',
-                          {
+                         /* {
                             key: 'icon',
                             className: 'about-feature-icon'
-                          },
+                          },*/
                           React.createElement(feature.icon, { 
                             size: 32,
                             className: 'urban-icon'
@@ -541,7 +541,7 @@ const AboutPage = () => {
                 key: 'copyright',
                 className: 'footer-copyright'
               },
-              `© ${new Date().getFullYear()} AI-KOS. All rights reserved.`
+              `© ${new Date().getFullYear()} AI-KOS. All rights reserved by MandlaNDV.`
             )
           ]
         )
