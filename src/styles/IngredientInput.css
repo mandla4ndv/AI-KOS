@@ -315,4 +315,99 @@
   .upload-area.dragging::before {
     animation: none;
   }
+
+  /* Inline Error Styles */
+.image-error-message {
+  border: 1px solid hsl(var(--destructive));
+  background-color: hsl(var(--destructive) / 0.05);
+  border-radius: var(--radius);
+  padding: 1rem;
+  margin-top: 1rem;
+  animation: fade-in 0.3s ease-out;
+}
+
+.image-error-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.image-error-icon {
+  flex-shrink: 0;
+  margin-top: 0.125rem;
+  color: hsl(var(--destructive));
+}
+
+.image-error-text {
+  flex: 1;
+}
+
+.image-error-main {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: hsl(var(--destructive));
+  margin: 0;
+  line-height: 1.4;
+}
+
+.image-error-help {
+  font-size: 0.75rem;
+  color: hsl(var(--muted-foreground));
+  margin: 0.25rem 0 0 0;
+  line-height: 1.4;
+}
+
+.image-error-close {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  border-radius: 0.25rem;
+  padding: 0.25rem;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  color: hsl(var(--destructive));
+  min-width: 24px;
+  min-height: 24px;
+}
+
+.image-error-close:hover {
+  background-color: hsl(var(--destructive) / 0.1);
+}
+
+/* Upload area error state */
+.upload-area-error {
+  border-color: hsl(var(--destructive)) !important;
+  background-color: hsl(var(--destructive) / 0.02);
+}
+
+/* Animation */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Mobile optimizations */
+@media (max-width: 640px) {
+  .image-error-message {
+    padding: 0.75rem;
+  }
+  
+  .image-error-content {
+    gap: 0.5rem;
+  }
+  
+  .image-error-main {
+    font-size: 0.8125rem;
+  }
+  
+  .image-error-help {
+    font-size: 0.6875rem;
+  }
+}
 }

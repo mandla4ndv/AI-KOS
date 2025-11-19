@@ -49,6 +49,11 @@ const Header = ({ currentPage, onPageChange, onAuthClick }) => {
     { key: 'about', label: 'About Us' }
   ];
 
+  const handleNavigation = (pageKey) => {
+    onPageChange(pageKey);
+    setMobileMenuOpen(false);
+  };
+
   return React.createElement(
     React.Fragment,
     null,
@@ -67,7 +72,7 @@ const Header = ({ currentPage, onPageChange, onAuthClick }) => {
               'button',
               {
                 key: 'logo',
-                onClick: () => onPageChange('home'),
+                onClick: () => handleNavigation('home'),
                 className: 'header-logo'
               },
               [
@@ -84,6 +89,8 @@ const Header = ({ currentPage, onPageChange, onAuthClick }) => {
                 )
               ]
             ),
+            
+            // Desktop Navigation - Visible on tablet and desktop
             React.createElement(
               'nav',
               { key: 'desktop-nav', className: 'header-nav' },
@@ -92,13 +99,15 @@ const Header = ({ currentPage, onPageChange, onAuthClick }) => {
                   'button',
                   {
                     key: item.key,
-                    onClick: () => onPageChange(item.key),
+                    onClick: () => handleNavigation(item.key),
                     className: `nav-button ${currentPage === item.key ? 'active' : ''}`
                   },
                   item.label
                 )
               )
             ),
+
+            // Desktop User Section
             React.createElement(
               'div',
               { key: 'user-section', className: 'header-user-section' },
@@ -133,18 +142,23 @@ const Header = ({ currentPage, onPageChange, onAuthClick }) => {
                 React.createElement(User, { size: 20 })
               )
             ),
+
+            // Mobile Menu Button - Visible on mobile only
             React.createElement(
               'button',
               {
                 key: 'mobile-menu',
                 onClick: () => setMobileMenuOpen(!mobileMenuOpen),
-                className: 'mobile-menu-button'
+                className: 'mobile-menu-button',
+                'aria-label': mobileMenuOpen ? 'Close menu' : 'Open menu'
               },
               mobileMenuOpen ? React.createElement(X, { size: 20 }) : React.createElement(Menu, { size: 20 })
             )
           ]
         )
       ),
+
+      // Mobile Navigation Menu - Overlay for mobile
       mobileMenuOpen && React.createElement(
         'div',
         {
@@ -154,20 +168,21 @@ const Header = ({ currentPage, onPageChange, onAuthClick }) => {
         React.createElement(
           'div',
           { className: 'mobile-nav-container' },
-          navItems.map(item =>
-            React.createElement(
-              'button',
-              {
-                key: item.key,
-                onClick: () => {
-                  onPageChange(item.key);
-                  setMobileMenuOpen(false);
+          [
+            // Navigation Items
+            ...navItems.map(item =>
+              React.createElement(
+                'button',
+                {
+                  key: item.key,
+                  onClick: () => handleNavigation(item.key),
+                  className: `mobile-nav-button ${currentPage === item.key ? 'active' : ''}`
                 },
-                className: `mobile-nav-button ${currentPage === item.key ? 'active' : ''}`
-              },
-              item.label
-            )
-          ).concat(
+                item.label
+              )
+            ),
+            
+            // User Actions
             !user ? React.createElement(
               'button',
               {
@@ -191,9 +206,11 @@ const Header = ({ currentPage, onPageChange, onAuthClick }) => {
               },
               'Logout'
             )
-          )
+          ]
         )
       ),
+
+      // Auth Modal
       React.createElement(AuthModal, {
         key: 'auth-modal',
         open: authModalOpen,

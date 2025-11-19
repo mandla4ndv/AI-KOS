@@ -3,59 +3,80 @@ import { X } from 'lucide-react';
 import '../styles/Toast.css';
 
 const Toast = ({ toasts, onRemove }) => {
+  // Separate toasts by position
+  const topToasts = toasts.filter(toast => !toast.position || toast.position === 'top');
+  const bottomToasts = toasts.filter(toast => toast.position === 'bottom');
+
   return React.createElement(
-    'div',
-    { className: 'fixed top-4 right-4 z-50 space-y-2' },
-    toasts.map((toast) =>
-      React.createElement(
+    React.Fragment,
+    null,
+    [
+      // Top toasts (default behavior)
+      topToasts.length > 0 && React.createElement(
         'div',
         {
-          key: toast.id,
-          className: `glass-card border rounded-lg p-4 min-w-80 max-w-md transform transition-all duration-300 ${
-            toast.variant === 'destructive' 
-              ? 'border-destructive' 
-              : 'border-border'
-          }`,
-          style: toast.variant === 'destructive' ? {
-            borderColor: 'var(--destructive)',
-            backgroundColor: 'rgba(220, 38, 38, 0.1)',
-            color: 'var(--destructive)'
-          } : {}
+          key: 'top-toasts',
+          className: 'toast-container top-toast-container'
         },
+        topToasts.map((toast) => renderToast(toast, onRemove))
+      ),
+      
+      // Bottom toasts (new)
+      bottomToasts.length > 0 && React.createElement(
+        'div',
+        {
+          key: 'bottom-toasts',
+          className: 'toast-container bottom-toast-container'
+        },
+        bottomToasts.map((toast) => renderToast(toast, onRemove))
+      )
+    ]
+  );
+};
+
+const renderToast = (toast, onRemove) => {
+  return React.createElement(
+    'div',
+    {
+      key: toast.id,
+      className: `toast ${toast.variant === 'destructive' ? 'destructive' : ''} ${toast.variant === 'success' ? 'success' : ''}`
+    },
+    React.createElement(
+      'div',
+      { className: 'toast-content' },
+      [
         React.createElement(
           'div',
-          { className: 'flex items-start justify-between' },
+          { key: 'content', className: 'toast-message' },
           [
             React.createElement(
-              'div',
-              { key: 'content', className: 'flex-1' },
-              [
-                React.createElement(
-                  'h4',
-                  { key: 'title', className: 'font-semibold' },
-                  toast.title
-                ),
-                toast.description && React.createElement(
-                  'p',
-                  { key: 'desc', className: 'text-sm mt-1', style: { color: 'var(--muted-foreground)' } },
-                  toast.description
-                )
-              ]
+              'h4',
+              { key: 'title', className: 'toast-title' },
+              toast.title
             ),
-            React.createElement(
-              'button',
-              {
-                key: 'close',
-                onClick: () => onRemove(toast.id),
-                className: 'ml-4 flex-shrink-0 transition-colors',
-                style: { color: 'var(--muted-foreground)' }
-              },
-              React.createElement(X, { size: 16 })
+            toast.description && React.createElement(
+              'p',
+              { key: 'desc', className: 'toast-description' },
+              toast.description
             )
           ]
+        ),
+        React.createElement(
+          'button',
+          {
+            key: 'close',
+            onClick: () => onRemove(toast.id),
+            className: 'toast-close',
+            'aria-label': 'Close toast'
+          },
+          React.createElement(X, { size: 16 })
         )
-      )
-    )
+      ]
+    ),
+    React.createElement('div', {
+      key: 'progress',
+      className: 'toast-progress'
+    })
   );
 };
 

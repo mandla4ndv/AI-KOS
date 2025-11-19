@@ -7,8 +7,10 @@ const ai = new GoogleGenAI({
 class GeminiClient {
   async detectIngredientsFromImage(imageFile) {
     try {
-      const prompt = `Look at this food image and tell me what ingredients you can see. Return ONLY a JSON array of ingredient names in lowercase. Example: ["chicken", "tomatoes", "onions"]`;
+      const prompt = `Look at this food image and tell me what ingredients you can see. Return ONLY a JSON array of ingredient names in lowercase. Example: ["chicken", "tomatoes", "onions"]
       
+      IMPORTANT: If the image does not contain food ingredients (like cars, people, landscapes, etc.), return an empty array [].`;
+
       const base64Image = await this.fileToBase64(imageFile);
       
       const response = await ai.models.generateContent({
@@ -32,17 +34,66 @@ class GeminiClient {
       const text = response.text.trim();
       console.log("Gemini Vision Response:", text);
 
+      // Handle cases where Gemini returns non-JSON responses
+      if (text.toLowerCase().includes("i'm sorry") || 
+          text.toLowerCase().includes("i can't") || 
+          text.toLowerCase().includes("no food") ||
+          text.toLowerCase().includes("car") ||
+          text.toLowerCase().includes("vehicle")) {
+        console.log("No food ingredients detected in image");
+        return [];
+      }
+
       const cleanedText = text.replace(/```json|```/g, '').trim();
-      const ingredients = JSON.parse(cleanedText);
+      
+      // Try to extract JSON from the response
+      let ingredients;
+      try {
+        ingredients = JSON.parse(cleanedText);
+      } catch (parseError) {
+        console.log("Failed to parse JSON, trying to extract array from text");
+        // Try to extract array from text response
+        const arrayMatch = cleanedText.match(/\[.*\]/);
+        if (arrayMatch) {
+          ingredients = JSON.parse(arrayMatch[0]);
+        } else {
+          // If no array found, check if it's a list of ingredients
+          const ingredientList = cleanedText.split('\n')
+            .map(line => line.replace(/^-|\d+\.|\*/g, '').trim())
+            .filter(line => line.length > 0 && !line.toLowerCase().includes('ingredient'));
+          
+          if (ingredientList.length > 0) {
+            ingredients = ingredientList;
+          } else {
+            ingredients = [];
+          }
+        }
+      }
       
       if (Array.isArray(ingredients) && ingredients.length > 0) {
-        return ingredients;
+        // Filter out any non-food items
+        const foodIngredients = ingredients.filter(ing => 
+          !ing.toLowerCase().includes('car') &&
+          !ing.toLowerCase().includes('vehicle') &&
+          !ing.toLowerCase().includes('person') &&
+          !ing.toLowerCase().includes('background')
+        );
+        return foodIngredients;
       } else {
-        throw new Error("Could not identify ingredients from the image");
+        console.log("No valid ingredients array found in response");
+        return [];
       }
     } catch (error) {
       console.error("Error detecting ingredients:", error);
-      throw new Error("Failed to analyze image. Please try a clearer photo or add ingredients manually.");
+      
+      // Provide more specific error messages
+      if (error.message.includes('JSON') || error.message.includes('parse')) {
+        throw new Error("The AI service returned an unexpected response. Please try a different image.");
+      } else if (error.message.includes('car') || error.message.includes('vehicle')) {
+        throw new Error("This image appears to contain a vehicle, not food ingredients. Please upload a photo of food.");
+      } else {
+        throw new Error("Failed to analyze image. Please try a clearer photo or add ingredients manually.");
+      }
     }
   }
 
@@ -142,9 +193,23 @@ export async function detectIngredientsFromImage(imageFile) {
     const ingredients = await geminiClient.detectIngredientsFromImage(imageFile);
     
     console.log("Detected ingredients:", ingredients);
+    
+    // If no ingredients detected, throw a specific error
+    if (ingredients.length === 0) {
+      throw new Error("No food ingredients detected in this image. Please upload a photo of food items.");
+    }
+    
     return ingredients;
   } catch (error) {
     console.error("Error in detectIngredientsFromImage:", error);
-    throw error;
+    
+    // Re-throw with user-friendly message
+    if (error.message.includes('No food ingredients')) {
+      throw error; // Keep the specific message
+    } else if (error.message.includes('vehicle') || error.message.includes('car')) {
+      throw new Error("This image contains a vehicle, not food ingredients. Please upload a photo of food.");
+    } else {
+      throw new Error("Failed to analyze image. Please try a clearer photo or add ingredients manually.");
+    }
   }
 }

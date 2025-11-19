@@ -1,0 +1,5 @@
+{
+  "scripts": ["server-host.js"],
+  "assets": ["build/**/*"],
+  "targets": ["node18-win-x64"]
+}
