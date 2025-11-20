@@ -99,32 +99,44 @@ class GeminiClient {
 
   async generateRecipe(ingredients) {
     try {
-      const prompt = `Create a simple, practical recipe using these ingredients: ${ingredients.join(', ')}.
+      const commonAddedIngredients = ['salt', 'pepper', 'oil', 'olive oil', 'vegetable oil', 'water', 'butter', 'flour', 'sugar', 'garlic', 'onion powder', 'garlic powder', 'spices', 'seasoning'];
       
-      Make it easy to follow with clear instructions. Use normal ingredients that people have at home.
-      Keep the recipe name simple and descriptive.
-      
-      Return ONLY valid JSON with this structure:
-      {
-        "title": "Simple recipe name",
-        "prepTime": number between 15-60,
-        "difficulty": "Easy" or "Medium",
-        "servings": number between 2-4,
-        "ingredients": [
-          {
-            "name": "ingredient name",
-            "quantity": "amount",
-            "unit": "unit or empty string"
-          }
-        ],
-        "instructions": [
-          {
-            "step": 1,
-            "description": "simple instruction",
-            "duration": number (optional)
-          }
-        ]
-      }`;
+      const prompt = `Create a simple, practical recipe using ONLY these ingredients: ${ingredients.join(', ')}.
+
+STRICT RULES - DO NOT VIOLATE THESE:
+1. USE ONLY THESE EXACT INGREDIENTS: ${ingredients.join(', ')}
+2. DO NOT ADD any salt, pepper, oil, butter, water, flour, sugar, or any other ingredients
+3. DO NOT ADD any spices, herbs, or seasonings
+4. If cooking requires heat, assume basic cooking methods that don't require added fats
+5. If ingredients need preparation (washing, peeling, chopping), include those steps
+6. Recipe must work with ONLY the provided ingredients
+
+ALLOWED TECHNIQUES (no additional ingredients):
+- Boiling, steaming, baking, grilling, roasting
+- Mixing, chopping, slicing, dicing
+- Mashing, blending, whisking
+
+Return ONLY valid JSON with this structure:
+{
+  "title": "Recipe name using only: ${ingredients.join(', ')}",
+  "prepTime": number between 15-60,
+  "difficulty": "Easy" or "Medium", 
+  "servings": number between 2-4,
+  "ingredients": [
+    {
+      "name": "ingredient name (MUST be from: ${ingredients.join(', ')})",
+      "quantity": "amount",
+      "unit": "unit or empty string"
+    }
+  ],
+  "instructions": [
+    {
+      "step": 1,
+      "description": "instruction using only provided ingredients",
+      "duration": number (optional)
+    }
+  ]
+}`;
 
       const response = await ai.models.generateContent({
         model: "gemini-2.0-flash-exp",
@@ -136,6 +148,59 @@ class GeminiClient {
 
       const cleanedText = text.replace(/```json|```/g, '').trim();
       const recipeData = JSON.parse(cleanedText);
+      
+      // STRICT VALIDATION: Filter out any unauthorized ingredients
+      const providedIngredients = ingredients.map(ing => ing.toLowerCase().trim());
+      const recipeIngredients = recipeData.ingredients.map(ing => ing.name.toLowerCase().trim());
+      
+      console.log("Provided ingredients:", providedIngredients);
+      console.log("Recipe ingredients:", recipeIngredients);
+      
+      // Filter out any ingredients that aren't in the provided list
+      const validatedIngredients = recipeData.ingredients.filter(ingredient => {
+        const ingName = ingredient.name.toLowerCase().trim();
+        
+        // Check if this ingredient matches any provided ingredient
+        const isAllowed = providedIngredients.some(provided => 
+          ingName.includes(provided) || provided.includes(ingName)
+        );
+        
+        // Also check for common added ingredients
+        const isCommonAdded = commonAddedIngredients.some(common => 
+          ingName.includes(common)
+        );
+        
+        if (!isAllowed || isCommonAdded) {
+          console.log(`Removing unauthorized ingredient: ${ingredient.name}`);
+          return false;
+        }
+        
+        return true;
+      });
+      
+      // Update the recipe with filtered ingredients
+      recipeData.ingredients = validatedIngredients;
+      
+      // Also validate instructions to remove references to unauthorized ingredients
+      recipeData.instructions = recipeData.instructions.map(instruction => {
+        let description = instruction.description;
+        
+        // Remove references to common added ingredients from instructions
+        commonAddedIngredients.forEach(ingredient => {
+          const regex = new RegExp(`\\b${ingredient}\\b`, 'gi');
+          description = description.replace(regex, '');
+        });
+        
+        // Clean up any double spaces or punctuation issues
+        description = description.replace(/\s+/g, ' ').trim();
+        description = description.replace(/\.\./g, '.').replace(/\s\./g, '.');
+        description = description.replace(/,\s*,/g, ',').replace(/\s,/g, ',');
+        
+        return {
+          ...instruction,
+          description: description
+        };
+      });
       
       return {
         id: `recipe-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -168,6 +233,11 @@ export async function generateRecipe(ingredients) {
     console.log("Generating recipe with ingredients:", ingredients);
     
     const recipe = await geminiClient.generateRecipe(ingredients);
+    
+    // Final validation check
+    if (recipe.ingredients.length === 0) {
+      throw new Error("No valid recipe could be created with only the provided ingredients. Please try adding more ingredients.");
+    }
     
     // No image generation - return recipe without images
     const finalRecipe = {
