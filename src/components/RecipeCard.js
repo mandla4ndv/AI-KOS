@@ -1,3 +1,4 @@
+// components/RecipeCard.js
 import React, { useState, useEffect } from 'react';
 import { Clock, Users, ChefHat, Heart, Star, Share2 } from 'lucide-react';
 import { useToast } from '../contexts/ToastContext';
@@ -16,7 +17,6 @@ const RecipeCard = ({ recipe, userId, onAuthRequired }) => {
   const { addToast } = useToast();
   const { user } = useAuth();
 
-  // Check if recipe is saved when component mounts
   useEffect(() => {
     const checkIfSaved = async () => {
       if (user && userId) {
@@ -31,12 +31,6 @@ const RecipeCard = ({ recipe, userId, onAuthRequired }) => {
 
     checkIfSaved();
   }, [user, userId, recipe.id]);
-
-  const difficultyColors = {
-    Easy: 'badge-secondary',
-    Medium: 'badge-primary',
-    Hard: 'badge-destructive'
-  };
 
   const handleSave = async () => {
     if (!user) {
@@ -110,314 +104,147 @@ const RecipeCard = ({ recipe, userId, onAuthRequired }) => {
   };
 
   const StarRatingDisplay = ({ rating, size = 16 }) => {
-    return React.createElement(
-      'div',
-      { className: 'flex gap-1' },
-      [1, 2, 3, 4, 5].map((star) =>
-        React.createElement(Star, {
-          key: star,
-          size: size,
-          fill: star <= rating ? 'var(--primary)' : 'none',
-          color: star <= rating ? 'var(--primary)' : 'var(--muted-foreground)'
-        })
-      )
+    return (
+      <div className="flex gap-1">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <Star
+            key={star}
+            size={size}
+            fill={star <= rating ? 'var(--primary)' : 'none'}
+            color={star <= rating ? 'var(--primary)' : 'var(--muted-foreground)'}
+          />
+        ))}
+      </div>
     );
   };
 
-  return React.createElement(
-    React.Fragment,
-    null,
-    [
-      React.createElement(
-        'div',
-        { 
-          key: 'recipe-card',
-          className: 'glass-card rounded-xl overflow-hidden animate-slide-up'
-        },
-        [
-          React.createElement(
-            'div',
-            { key: 'content', className: 'p-6' },
-            [
-              React.createElement(
-                'div',
-                {
-                  key: 'header',
-                  className: 'flex items-start justify-between gap-4 mb-4'
-                },
-                [
-                  React.createElement(
-                    'h2',
-                    {
-                      key: 'title',
-                      className: 'text-2xl font-bold text-balance flex-1'
-                    },
-                    recipe.title
-                  ),
-                  React.createElement(
-                    'span',
-                    {
-                      key: 'badge',
-                      className: difficultyColors[recipe.difficulty]
-                    },
-                    recipe.difficulty
-                  )
-                ]
-              ),
-              React.createElement(
-                'div',
-                {
-                  key: 'meta',
-                  className: 'flex flex-wrap gap-4 text-sm mb-6',
-                  style: { color: 'var(--muted-foreground)' }
-                },
-                [
-                  React.createElement(
-                    'div',
-                    { key: 'time', className: 'flex items-center gap-1.5' },
-                    [
-                      React.createElement(Clock, { key: 'icon', size: 16 }),
-                      `${recipe.prepTime} mins`
-                    ]
-                  ),
-                  React.createElement(
-                    'div',
-                    { key: 'servings', className: 'flex items-center gap-1.5' },
-                    [
-                      React.createElement(Users, { key: 'icon', size: 16 }),
-                      `${recipe.servings} servings`
-                    ]
-                  ),
-                  React.createElement(
-                    'div',
-                    { key: 'steps', className: 'flex items-center gap-1.5' },
-                    [
-                      React.createElement(ChefHat, { key: 'icon', size: 16 }),
-                      `${recipe.instructions.length} steps`
-                    ]
-                  )
-                ]
-              ),
-              React.createElement(
-                'div',
-                { key: 'ingredients', className: 'mb-6' },
-                [
-                  React.createElement(
-                    'h3',
-                    {
-                      key: 'title',
-                      className: 'font-semibold text-lg mb-3'
-                    },
-                    'Ingredients'
-                  ),
-                  React.createElement(
-                    'div',
-                    {
-                      key: 'list',
-                      className: 'grid grid-cols-1 md:grid-cols-2 gap-2'
-                    },
-                    recipe.ingredients.map((ingredient, index) =>
-                      React.createElement(
-                        'div',
-                        {
-                          key: index,
-                          className: 'flex items-center gap-2 text-sm rounded-lg px-3 py-2 stagger-item transition-transform hover:scale-105',
-                          style: { backgroundColor: 'var(--muted)' }
-                        },
-                        [
-                          React.createElement(
-                            'div',
-                            {
-                              key: 'dot',
-                              className: 'w-1.5 h-1.5 rounded-full',
-                              style: { backgroundColor: 'var(--primary)' }
-                            }
-                          ),
-                          React.createElement(
-                            'span',
-                            { key: 'text' },
-                            `${ingredient.quantity}${ingredient.unit ? ` ${ingredient.unit}` : ''} ${ingredient.name}`
-                          )
-                        ]
-                      )
-                    )
-                  )
-                ]
-              ),
-              React.createElement(
-                'div',
-                { key: 'instructions', className: 'mb-6' },
-                [
-                  React.createElement(
-                    'h3',
-                    {
-                      key: 'title',
-                      className: 'font-semibold text-lg mb-3'
-                    },
-                    'Instructions'
-                  ),
-                  React.createElement(
-                    'div',
-                    { key: 'list', className: 'space-y-3' },
-                    recipe.instructions.map((instruction) =>
-                      React.createElement(
-                        'div',
-                        {
-                          key: instruction.step,
-                          className: 'flex gap-3 stagger-item'
-                        },
-                        [
-                          React.createElement(
-                            'div',
-                            {
-                              key: 'number',
-                              className: 'flex-shrink-0 flex items-center justify-center w-7 h-7 rounded-full text-sm font-semibold',
-                              style: { backgroundColor: 'var(--primary)', color: 'var(--primary-foreground)' }
-                            },
-                            instruction.step
-                          ),
-                          React.createElement(
-                            'div',
-                            {
-                              key: 'desc',
-                              className: 'flex-1'
-                            },
-                            [
-                              React.createElement(
-                                'p',
-                                {
-                                  key: 'text',
-                                  className: 'text-sm leading-relaxed pt-0.5'
-                                },
-                                instruction.description
-                              ),
-                              instruction.duration && React.createElement(
-                                'div',
-                                {
-                                  key: 'duration',
-                                  className: 'flex items-center gap-1 mt-2 text-xs',
-                                  style: { color: 'var(--muted-foreground)' }
-                                },
-                                [
-                                  React.createElement(Clock, { key: 'icon', size: 12 }),
-                                  `Timer: ${instruction.duration} minutes`
-                                ]
-                              )
-                            ]
-                          )
-                        ]
-                      )
-                    )
-                  )
-                ]
-              ),
-              React.createElement(
-                'div',
-                {
-                  key: 'actions',
-                  className: 'pt-4 border-t',
-                  style: { borderColor: 'var(--border)' }
-                },
-                React.createElement(
-                  'div',
-                  { className: 'flex items-center justify-center gap-3' },
-                  [
-                    React.createElement(
-                      'button',
-                      {
-                        key: 'cook',
-                        onClick: handleStartCooking,
-                        className: 'btn btn-primary btn-lg gap-2 flex-1'
-                      },
-                      [
-                        React.createElement(ChefHat, { key: 'icon', size: 20 }),
-                        'Start Cooking'
-                      ]
-                    )
-                  ]
-                )
-              ),
-              React.createElement(
-                'div',
-                {
-                  key: 'secondary-actions',
-                  className: 'pt-4 flex items-center justify-center gap-3'
-                },
-                [
-                  React.createElement(
-                    'button',
-                    {
-                      key: 'save',
-                      onClick: handleSave,
-                      disabled: loading,
-                      className: `btn btn-sm gap-2 transition-all hover:scale-105 ${isSaved ? 'btn-primary' : 'btn-outline'}`,
-                      style: isSaved ? {} : { backgroundColor: 'transparent' }
-                    },
-                    [
-                      React.createElement(Heart, {
-                        key: 'icon',
-                        size: 16,
-                        fill: isSaved ? 'currentColor' : 'none'
-                      }),
-                      loading ? '...' : (isSaved ? 'Saved' : 'Save')
-                    ]
-                  ),
-                  React.createElement(
-                    'button',
-                    {
-                      key: 'rate',
-                      onClick: () => user ? setShowRatingDialog(true) : onAuthRequired(),
-                      className: 'btn btn-outline btn-sm gap-2',
-                      style: { backgroundColor: 'transparent' }
-                    },
-                    [
-                      React.createElement(Star, {
-                        key: 'icon',
-                        size: 16,
-                        fill: currentRating > 0 ? 'currentColor' : 'none',
-                        color: currentRating > 0 ? 'var(--primary)' : 'currentColor'
-                      }),
-                      currentRating > 0 ? React.createElement(StarRatingDisplay, { 
-                        key: 'stars', 
-                        rating: currentRating, 
-                        size: 12 
-                      }) : 'Rate'
-                    ]
-                  ),
-                  React.createElement(
-                    'button',
-                    {
-                      key: 'share',
-                      onClick: () => setShowShareModal(true),
-                      className: 'btn btn-outline btn-sm gap-2',
-                      style: { backgroundColor: 'transparent' }
-                    },
-                    [
-                      React.createElement(Share2, { key: 'icon', size: 16 }),
-                      'Share'
-                    ]
-                  )
-                ]
-              )
-            ]
-          )
-        ]
-      ),
-      React.createElement(RatingDialog, {
-        key: 'rating-dialog',
-        open: showRatingDialog,
-        onOpenChange: setShowRatingDialog,
-        recipeTitle: recipe.title,
-        currentRating: currentRating,
-        onRate: handleRate
-      }),
-      React.createElement(ShareModal, {
-        key: 'share-modal',
-        open: showShareModal,
-        onOpenChange: setShowShareModal,
-        recipe: recipe
-      })
-    ]
+  return (
+    <>
+      <div className="recipe-card rounded-xl overflow-hidden animate-slide-up">
+        <div className="recipe-card-content">
+          {/* Header without difficulty badge */}
+          <div className="recipe-card-header">
+            <h2 className="recipe-card-title">{recipe.title}</h2>
+            {/* Difficulty badge completely removed */}
+          </div>
+
+          <div className="recipe-meta-info">
+            <div className="recipe-meta-item">
+              <Clock size={16} />
+              {recipe.prepTime} mins
+            </div>
+            <div className="recipe-meta-item">
+              <Users size={16} />
+              {recipe.servings} servings
+            </div>
+            <div className="recipe-meta-item">
+              <ChefHat size={16} />
+              {recipe.instructions.length} steps
+            </div>
+          </div>
+
+          <div className="recipe-ingredients-section">
+            <h3 className="recipe-ingredients-title">Ingredients</h3>
+            <div className="recipe-ingredients-grid">
+              {recipe.ingredients.map((ingredient, index) => (
+                <div key={index} className="recipe-ingredient-item stagger-item">
+                  <div className="recipe-ingredient-dot" />
+                  <span className="recipe-ingredient-text">
+                    {ingredient.quantity}{ingredient.unit ? ` ${ingredient.unit}` : ''} {ingredient.name}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="recipe-instructions-section">
+            <h3 className="recipe-instructions-title">Instructions</h3>
+            <div className="recipe-instructions-list">
+              {recipe.instructions.map((instruction) => (
+                <div key={instruction.step} className="recipe-instruction-item stagger-item">
+                  <div className="recipe-instruction-number">
+                    {instruction.step}
+                  </div>
+                  <div className="recipe-instruction-content">
+                    <p className="recipe-instruction-description">
+                      {instruction.description}
+                    </p>
+                    {instruction.duration && (
+                      <div className="recipe-instruction-duration">
+                        <Clock size={12} />
+                        Timer: {instruction.duration} minutes
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="recipe-primary-actions">
+            <div className="recipe-primary-actions-container">
+              <button
+                onClick={handleStartCooking}
+                className="recipe-cook-button"
+              >
+                <ChefHat size={20} />
+                Start Cooking
+              </button>
+            </div>
+          </div>
+
+          <div className="recipe-secondary-actions">
+            <button
+              onClick={handleSave}
+              disabled={loading}
+              className={`recipe-action-button ${isSaved ? 'recipe-save-button saved' : ''}`}
+            >
+              <Heart
+                size={16}
+                fill={isSaved ? 'currentColor' : 'none'}
+              />
+              {loading ? '...' : (isSaved ? 'Saved' : 'Save')}
+            </button>
+            <button
+              onClick={() => user ? setShowRatingDialog(true) : onAuthRequired()}
+              className="recipe-action-button"
+            >
+              <Star
+                size={16}
+                fill={currentRating > 0 ? 'currentColor' : 'none'}
+                color={currentRating > 0 ? 'var(--primary)' : 'currentColor'}
+              />
+              {currentRating > 0 ? (
+                <StarRatingDisplay rating={currentRating} size={12} />
+              ) : (
+                'Rate'
+              )}
+            </button>
+            <button
+              onClick={() => setShowShareModal(true)}
+              className="recipe-action-button"
+            >
+              <Share2 size={16} />
+              Share
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <RatingDialog
+        open={showRatingDialog}
+        onOpenChange={setShowRatingDialog}
+        recipeTitle={recipe.title}
+        currentRating={currentRating}
+        onRate={handleRate}
+      />
+
+      <ShareModal
+        open={showShareModal}
+        onOpenChange={setShowShareModal}
+        recipe={recipe}
+      />
+    </>
   );
 };
 
