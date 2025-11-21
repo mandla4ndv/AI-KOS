@@ -8,15 +8,30 @@ import { useAuth } from '../contexts/AuthContext';
 import { generateRecipe } from '../services/recipeService';
 import '../styles/HomePage.css';
 
-const HomePage = ({ onAuthRequired }) => {
+const HomePage = ({ onAuthRequired, onStartCooking }) => {
   const [ingredients, setIngredients] = useState([]);
   const [recipe, setRecipe] = useState(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [selectedDifficulty, setSelectedDifficulty] = useState(null);
   const { addToast } = useToast();
   const { user } = useAuth();
 
+  const difficultyOptions = [
+    { id: 'easy', label: 'Easy', description: 'Quick & Simple' },
+    { id: 'medium', label: 'Medium', description: 'Balanced & Flavorful' },
+    { id: 'difficult', label: 'Difficult', description: 'Gourmet & Complex' }
+  ];
+
+  const getDifficultyDescription = (difficulty) => {
+    const descriptions = {
+      easy: "Quick & Simple Recipe",
+      medium: "Balanced & Flavorful Recipe", 
+      difficult: "Gourmet & Complex Recipe"
+    };
+    return descriptions[difficulty] || "AI Generated Recipe";
+  };
+
   const handleGenerateRecipe = async () => {
-    // Check if user is logged in
     if (!user) {
       onAuthRequired();
       return;
@@ -35,211 +50,190 @@ const HomePage = ({ onAuthRequired }) => {
     setRecipe(null);
 
     try {
-      console.log("Starting recipe generation with:", ingredients);
-      const generatedRecipe = await generateRecipe(ingredients);
+      // Use selected difficulty or random if none selected
+      const difficulty = selectedDifficulty || getRandomDifficulty();
+      console.log("Generating recipe with difficulty:", difficulty);
+      
+      // Pass userId to generateRecipe to check for duplicates
+      const generatedRecipe = await generateRecipe(ingredients, difficulty, user.uid);
       setRecipe(generatedRecipe);
 
       addToast({
         title: 'Recipe generated!',
-        description: 'Your AI-powered recipe is ready',
+        description: `Your ${getDifficultyDescription(difficulty).toLowerCase()} is ready`,
       });
     } catch (error) {
       console.error("Recipe generation error:", error);
-      addToast({
-        title: 'Generation failed',
-        description: error.message || 'Could not generate recipe. Please try again.',
-        variant: 'destructive',
-      });
+      
+      if (error.message.includes('matches an existing saved recipe')) {
+        addToast({
+          title: 'Recipe already saved',
+          description: 'This recipe is already in your collection. Generating a different one...',
+          variant: 'warning',
+        });
+        // Auto-retry once with same ingredients
+        setTimeout(() => handleGenerateRecipe(), 1000);
+      } else {
+        addToast({
+          title: 'Generation failed',
+          description: error.message || 'Could not generate recipe. Please try again.',
+          variant: 'destructive',
+        });
+      }
     } finally {
       setIsGenerating(false);
     }
   };
 
+  const getRandomDifficulty = () => {
+    const difficulties = ['easy', 'medium', 'difficult'];
+    return difficulties[Math.floor(Math.random() * difficulties.length)];
+  };
+
   const handleStartCooking = () => {
     if (recipe) {
-      sessionStorage.setItem('currentRecipe', JSON.stringify(recipe));
-      window.location.hash = 'cook';
+      onStartCooking(recipe);
     }
   };
 
-  return React.createElement(
-    'div',
-    { className: 'min-h-screen flex flex-col' },
-    React.createElement(
-      'main',
-      { className: 'flex-1' },
-      React.createElement(
-        'div',
-        { className: 'container py-8 md:py-12' },
-        [
-          React.createElement(
-            'div',
-            {
-              key: 'hero',
-              className: 'max-w-3xl mx-auto text-center mb-12 animate-fade-in'
-            },
-            [
-              React.createElement(
-                'h1',
-                {
-                  key: 'title',
-                  className: 'text-4xl md:text-5xl font-bold mb-4 text-balance'
-                },
-                'Turn Ingredients into ',
-                React.createElement(
-                  'span',
-                  { style: { color: 'var(--primary)' } },
-                  'Delicious Recipes'
-                )
-              ),
-              React.createElement(
-                'p',
-                {
-                  key: 'subtitle',
-                  className: 'text-lg leading-relaxed',
-                  style: { color: 'var(--muted-foreground)' }
-                },
-                'Add your available ingredients and let AI create a perfect recipe for you'
-              )
-            ]
-          ),
-          React.createElement(
-            'div',
-            {
-              key: 'content',
-              className: 'max-w-5xl mx-auto grid gap-8 lg:grid-cols-[1fr,1.5fr]'
-            },
-            [
-              React.createElement(
-                'div',
-                {
-                  key: 'input',
-                  className: 'space-y-6 animate-slide-up'
-                },
-                React.createElement(
-                  'div',
-                  { className: 'card rounded-xl p-6' },
-                  [
-                    React.createElement(
-                      'h2',
-                      {
-                        key: 'title',
-                        className: 'text-xl font-semibold mb-4'
-                      },
-                      'Your Ingredients'
-                    ),
-                    React.createElement(IngredientInput, {
-                      key: 'input',
-                      ingredients: ingredients,
-                      onIngredientsChange: setIngredients,
-                      onAuthRequired: onAuthRequired
-                    }),
-                    !recipe && !isGenerating && React.createElement(
-                      'div',
-                      {
-                        key: 'placeholder',
-                        className: 'rounded-lg border p-6 flex flex-col items-center justify-center text-center my-6',
-                        style: { backgroundColor: 'var(--muted)', borderColor: 'var(--border)' }
-                      },
-                      [
-                        React.createElement(Sparkles, {
-                          key: 'icon',
-                          size: 48,
-                          style: { color: 'var(--primary)', marginBottom: '12px' }
-                        }),
-                        React.createElement(
-                          'h3',
-                          {
-                            key: 'title',
-                            className: 'text-lg font-semibold mb-2'
-                          },
-                          'Ready to Cook?'
-                        ),
-                        React.createElement(
-                          'p',
-                          {
-                            key: 'desc',
-                            className: 'text-sm leading-relaxed',
-                            style: { color: 'var(--muted-foreground)' }
-                          },
-                          'Add ingredients below or upload a photo to get started'
-                        )
-                      ]
-                    ),
-                    React.createElement(
-                      'button',
-                      {
-                        key: 'generate',
-                        className: 'btn btn-primary w-full mt-6 gap-2',
-                        onClick: handleGenerateRecipe,
-                        disabled: ingredients.length < 1 || isGenerating
-                      },
-                      [
-                        React.createElement(Sparkles, { key: 'icon', size: 20 }),
-                        isGenerating ? 'Generating...' : 'Generate Recipe'
-                      ]
-                    )
-                  ]
-                )
-              ),
-              React.createElement(
-                'div',
-                {
-                  key: 'recipe',
-                  className: 'animate-slide-up'
-                },
-                isGenerating ? React.createElement(RecipeSkeleton, { key: 'skeleton' }) :
-                recipe && !isGenerating && React.createElement(
-                  'div',
-                  { key: 'recipe-content', className: 'space-y-4 animate-fade-in' },
-                  [
-                    React.createElement(RecipeCard, {
-                      key: 'card',
-                      recipe: recipe,
-                      userId: user?.uid,
-                      onAuthRequired: onAuthRequired
-                    }),
-                    React.createElement(
-                      'div',
-                      {
-                        key: 'actions',
-                        className: 'flex gap-3'
-                      },
-                      [
-                        React.createElement(
-                          'button',
-                          {
-                            key: 'cook',
-                            onClick: handleStartCooking,
-                            className: 'btn btn-primary btn-lg gap-2 flex-1'
-                          },
-                          [
-                            React.createElement(ChefHat, { key: 'icon', size: 20 }),
-                            'Start Cooking'
-                          ]
-                        ),
-                        React.createElement(
-                          'button',
-                          {
-                            key: 'new',
-                            onClick: handleGenerateRecipe,
-                            className: 'btn btn-outline btn-lg gap-2'
-                          },
-                          [
-                            React.createElement(Sparkles, { key: 'icon', size: 20 }),
-                            'New Recipe'
-                          ]
-                        )
-                      ]
-                    )
-                  ]
-                )
-              )
-            ]
-          )
-        ]
-      )
-    )
+  return (
+    <div className="home-page">
+      <main className="home-main">
+        <div className="home-container">
+          {/* Hero Section */}
+          <div className="home-hero">
+            <h1 className="home-hero-title">
+              Turn Ingredients into <span className="text-primary">Delicious Recipes</span>
+            </h1>
+            <p className="home-hero-subtitle">
+              Add your available ingredients and let AI create a perfect recipe for you
+            </p>
+          </div>
+
+          {/* Main Content */}
+          <div className="home-content">
+            {/* Left Column - Input */}
+            <div className="home-input-section">
+              <div className="home-input-card">
+                <h2 className="home-input-title">Your Ingredients</h2>
+                
+                <IngredientInput
+                  ingredients={ingredients}
+                  onIngredientsChange={setIngredients}
+                  onAuthRequired={onAuthRequired}
+                />
+
+                {/* Difficulty Filters */}
+                <div className="difficulty-filters">
+                  <h3 className="difficulty-filters-title">Choose Difficulty</h3>
+                  <p className="difficulty-filters-subtitle">
+                    {selectedDifficulty 
+                      ? `Selected: ${difficultyOptions.find(d => d.id === selectedDifficulty)?.description}`
+                      : 'Select a difficulty or leave blank for random'
+                    }
+                  </p>
+                  <div className="difficulty-buttons">
+                    {difficultyOptions.map((difficulty) => (
+                      <button
+                        key={difficulty.id}
+                        className={`difficulty-button ${selectedDifficulty === difficulty.id ? 'active' : ''}`}
+                        onClick={() => setSelectedDifficulty(
+                          selectedDifficulty === difficulty.id ? null : difficulty.id
+                        )}
+                      >
+                        <span className="difficulty-label">{difficulty.label}</span>
+                        <span className="difficulty-description">{difficulty.description}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Placeholder */}
+                {!recipe && !isGenerating && (
+                  <div className="home-placeholder">
+                    <Sparkles className="home-placeholder-icon" size={48} />
+                    <h3 className="home-placeholder-title">Ready to Cook?</h3>
+                    <p className="home-placeholder-description">
+                      {selectedDifficulty 
+                        ? `Generate a ${getDifficultyDescription(selectedDifficulty).toLowerCase()}`
+                        : 'Add ingredients and generate a recipe - surprise difficulty each time!'
+                      }
+                    </p>
+                  </div>
+                )}
+
+                {/* Generate Button */}
+                <button
+                  className={`home-generate-button ${isGenerating ? 'loading' : ''}`}
+                  onClick={handleGenerateRecipe}
+                  disabled={ingredients.length < 1 || isGenerating}
+                >
+                  <Sparkles size={20} />
+                  {isGenerating 
+                    ? 'Generating...' 
+                    : selectedDifficulty 
+                      ? `Generate ${difficultyOptions.find(d => d.id === selectedDifficulty)?.label} Recipe`
+                      : 'Generate Recipe'
+                  }
+                </button>
+              </div>
+            </div>
+
+            {/* Right Column - Recipe */}
+            <div className="home-recipe-section">
+              {isGenerating ? (
+                <RecipeSkeleton />
+              ) : recipe ? (
+                <div className="home-recipe-content">
+                  {/* Difficulty Banner */}
+                  <div className="difficulty-banner">
+                    <span className="difficulty-text">
+                      {getDifficultyDescription(recipe.difficulty?.toLowerCase())}
+                    </span>
+                  </div>
+                  
+                  {/* Recipe Card */}
+                  <RecipeCard
+                    recipe={recipe}
+                    userId={user?.uid}
+                    onAuthRequired={onAuthRequired}
+                  />
+                  
+                  {/* Action Buttons */}
+                  <div className="home-recipe-actions">
+                    <button
+                      className="home-cook-button"
+                      onClick={handleStartCooking}
+                    >
+                      <ChefHat size={20} />
+                      Start Cooking
+                    </button>
+                    <button
+                      className="home-new-recipe-button"
+                      onClick={() => {
+                        setRecipe(null);
+                        handleGenerateRecipe();
+                      }}
+                    >
+                      <Sparkles size={20} />
+                      New Recipe
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="home-empty-state">
+                  <Sparkles size={64} className="home-empty-icon" />
+                  <h3 className="home-empty-title">No Recipe Yet</h3>
+                  <p className="home-empty-description">
+                    Add ingredients and generate your first AI-powered recipe!
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
   );
 };
 

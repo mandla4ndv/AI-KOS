@@ -1,9 +1,191 @@
-// services/recipeService.js
+import { 
+  doc, 
+  setDoc, 
+  getDoc, 
+  updateDoc, 
+  deleteDoc, 
+  collection, 
+  query, 
+  where, 
+  getDocs,
+  arrayUnion,
+  arrayRemove 
+} from 'firebase/firestore';
+import { db } from '../config/firebase-config';
 import { GoogleGenAI } from "@google/genai";
 
 const ai = new GoogleGenAI({ 
   apiKey: "AIzaSyD8h1rdTcyV9q-QZlqZAOz6POu2vKsEaoQ"
 });
+
+// Recipe operations
+export const saveRecipeToDB = async (userId, recipe) => {
+  try {
+    const recipeRef = doc(db, 'users', userId, 'recipes', recipe.id);
+    await setDoc(recipeRef, {
+      ...recipe,
+      savedAt: new Date(),
+      updatedAt: new Date()
+    }, { merge: true });
+    return true;
+  } catch (error) {
+    console.error('Error saving recipe to DB:', error);
+    throw error;
+  }
+};
+
+export const deleteRecipeFromDB = async (userId, recipeId) => {
+  try {
+    const recipeRef = doc(db, 'users', userId, 'recipes', recipeId);
+    await deleteDoc(recipeRef);
+    return true;
+  } catch (error) {
+    console.error('Error deleting recipe from DB:', error);
+    throw error;
+  }
+};
+
+export const getUserRecipes = async (userId) => {
+  try {
+    const recipesRef = collection(db, 'users', userId, 'recipes');
+    const querySnapshot = await getDocs(recipesRef);
+    const recipes = [];
+    querySnapshot.forEach((doc) => {
+      recipes.push({ id: doc.id, ...doc.data() });
+    });
+    return recipes.sort((a, b) => new Date(b.savedAt) - new Date(a.savedAt));
+  } catch (error) {
+    console.error('Error getting user recipes:', error);
+    throw error;
+  }
+};
+
+export const updateRecipeRating = async (userId, recipeId, rating, comment = '') => {
+  try {
+    const recipeRef = doc(db, 'users', userId, 'recipes', recipeId);
+    await updateDoc(recipeRef, {
+      userRating: rating,
+      userComment: comment,
+      ratedAt: new Date(),
+      updatedAt: new Date()
+    });
+    return true;
+  } catch (error) {
+    console.error('Error updating recipe rating:', error);
+    throw error;
+  }
+};
+
+// Check if recipe exists for user
+export const isRecipeSavedForUser = async (userId, recipeId) => {
+  try {
+    const recipeRef = doc(db, 'users', userId, 'recipes', recipeId);
+    const recipeDoc = await getDoc(recipeRef);
+    return recipeDoc.exists();
+  } catch (error) {
+    console.error('Error checking if recipe saved:', error);
+    return false;
+  }
+};
+
+// Get all saved recipe titles for a user
+export const getUserSavedRecipeTitles = async (userId) => {
+  try {
+    const recipes = await getUserRecipes(userId);
+    return recipes.map(recipe => recipe.title.toLowerCase().trim());
+  } catch (error) {
+    console.error('Error getting user saved recipe titles:', error);
+    return [];
+  }
+};
+
+// Check if a recipe with similar title/ingredients already exists
+export const isRecipeDuplicate = async (userId, newRecipeTitle, ingredients) => {
+  try {
+    const savedRecipes = await getUserRecipes(userId);
+    
+    // Normalize the new recipe title for comparison
+    const normalizedNewTitle = newRecipeTitle.toLowerCase().trim();
+    
+    // Check for exact title matches
+    const exactMatch = savedRecipes.find(recipe => 
+      recipe.title.toLowerCase().trim() === normalizedNewTitle
+    );
+    
+    if (exactMatch) {
+      return true;
+    }
+    
+    // Check for similar recipes based on ingredients and title pattern
+    const normalizedIngredients = ingredients.map(ing => ing.toLowerCase().trim());
+    
+    for (const savedRecipe of savedRecipes) {
+      // Check if the saved recipe contains similar ingredients
+      const savedRecipeIngredients = savedRecipe.ingredients?.map(ing => 
+        ing.name.toLowerCase().trim()
+      ) || [];
+      
+      // Calculate similarity score
+      const commonIngredients = normalizedIngredients.filter(ing => 
+        savedRecipeIngredients.some(savedIng => 
+          savedIng.includes(ing) || ing.includes(savedIng)
+        )
+      );
+      
+      const similarityScore = commonIngredients.length / Math.max(
+        normalizedIngredients.length, 
+        savedRecipeIngredients.length
+      );
+      
+      // If more than 70% ingredients match and titles are similar, consider it a duplicate
+      if (similarityScore > 0.7) {
+        const savedTitle = savedRecipe.title.toLowerCase();
+        const newTitle = normalizedNewTitle;
+        
+        // Check for title similarity
+        const titleWords = newTitle.split(' ');
+        const savedTitleWords = savedTitle.split(' ');
+        const commonTitleWords = titleWords.filter(word => 
+          savedTitleWords.some(savedWord => 
+            savedWord.includes(word) || word.includes(savedWord)
+          )
+        );
+        
+        if (commonTitleWords.length > 0) {
+          return true;
+        }
+      }
+    }
+    
+    return false;
+  } catch (error) {
+    console.error('Error checking recipe duplicate:', error);
+    return false;
+  }
+};
+
+// User preferences
+export const saveUserPreferences = async (userId, preferences) => {
+  try {
+    const userRef = doc(db, 'users', userId);
+    await setDoc(userRef, { preferences }, { merge: true });
+    return true;
+  } catch (error) {
+    console.error('Error saving user preferences:', error);
+    throw error;
+  }
+};
+
+export const getUserPreferences = async (userId) => {
+  try {
+    const userRef = doc(db, 'users', userId);
+    const userDoc = await getDoc(userRef);
+    return userDoc.exists() ? userDoc.data().preferences || {} : {};
+  } catch (error) {
+    console.error('Error getting user preferences:', error);
+    throw error;
+  }
+};
 
 class GeminiClient {
   async detectIngredientsFromImage(imageFile) {
@@ -91,7 +273,7 @@ class GeminiClient {
     }
   }
 
-  async generateRecipe(ingredients, difficulty = 'easy') {
+  async generateRecipe(ingredients, difficulty = 'easy', existingRecipeTitles = []) {
     try {
       const commonAddedIngredients = ['salt', 'pepper', 'oil', 'olive oil', 'vegetable oil', 'water', 'butter', 'flour', 'sugar', 'garlic', 'onion powder', 'garlic powder', 'spices', 'seasoning'];
       
@@ -122,7 +304,12 @@ class GeminiClient {
         - Difficulty level: Hard`
       };
 
-      const prompt = `${difficultyPrompts[difficulty]}
+      // Create a prompt that avoids existing recipes
+      const existingRecipesPrompt = existingRecipeTitles.length > 0 
+        ? `\n\nIMPORTANT: DO NOT create any of these existing recipes: ${existingRecipeTitles.join(', ')}. Create a completely different recipe.`
+        : '';
+
+      const prompt = `${difficultyPrompts[difficulty]}${existingRecipesPrompt}
 
 STRICT RULES - DO NOT VIOLATE THESE:
 1. USE ONLY THESE EXACT INGREDIENTS: ${ingredients.join(', ')}
@@ -133,6 +320,7 @@ STRICT RULES - DO NOT VIOLATE THESE:
 6. Recipe must work with ONLY the provided ingredients
 7. USE METRIC SYSTEM UNITS ONLY: grams (g), milliliters (ml), centimeters (cm), kilograms (kg), liters (L)
 8. DO NOT USE imperial units: no cups, ounces, pounds, inches, teaspoons, tablespoons, quarts, gallons
+9. DO NOT CREATE any recipe that matches these existing titles: ${existingRecipeTitles.join(', ')}
 
 METRIC CONVERSION GUIDE:
 - For solids: use grams (g) or kilograms (kg)
@@ -194,6 +382,17 @@ Return ONLY valid JSON with this structure:
         } else {
           throw new Error("AI returned invalid JSON format");
         }
+      }
+      
+      // Check if the generated recipe matches any existing recipes
+      const generatedTitle = recipeData.title.toLowerCase().trim();
+      const isDuplicate = existingRecipeTitles.some(existingTitle => 
+        generatedTitle.includes(existingTitle.toLowerCase()) || 
+        existingTitle.toLowerCase().includes(generatedTitle)
+      );
+      
+      if (isDuplicate) {
+        throw new Error("Generated recipe matches an existing saved recipe. Please try generating again.");
       }
       
       // Convert any imperial units to metric in the response
@@ -312,7 +511,7 @@ Return ONLY valid JSON with this structure:
       if (error.message.includes('JSON')) {
         throw new Error("The AI service returned an invalid response. Please try again.");
       }
-      throw new Error("Failed to generate recipe. Please try again.");
+      throw error;
     }
   }
 
@@ -331,7 +530,7 @@ Return ONLY valid JSON with this structure:
 
 const geminiClient = new GeminiClient();
 
-export async function generateRecipe(ingredients, difficulty = 'easy') {
+export async function generateRecipe(ingredients, difficulty = 'easy', userId = null) {
   try {
     console.log("Generating recipe with ingredients:", ingredients, "Difficulty:", difficulty);
     
@@ -339,7 +538,19 @@ export async function generateRecipe(ingredients, difficulty = 'easy') {
       throw new Error("No ingredients provided");
     }
     
-    const recipe = await geminiClient.generateRecipe(ingredients, difficulty);
+    // Get user's saved recipe titles if userId is provided
+    let existingRecipeTitles = [];
+    if (userId) {
+      try {
+        existingRecipeTitles = await getUserSavedRecipeTitles(userId);
+        console.log("User's existing recipe titles:", existingRecipeTitles);
+      } catch (error) {
+        console.error("Error fetching user's saved recipes:", error);
+        // Continue without existing recipes if there's an error
+      }
+    }
+    
+    const recipe = await geminiClient.generateRecipe(ingredients, difficulty, existingRecipeTitles);
     
     if (recipe.ingredients.length === 0) {
       throw new Error("No valid recipe could be created with only the provided ingredients. Please try adding more ingredients.");
